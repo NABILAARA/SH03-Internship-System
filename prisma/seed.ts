@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { hashPassword } from "../src/utils/hash";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +14,18 @@ async function main() {
   await prisma.user.deleteMany();
 
   console.log("Seeding users...");
-  const hashedPassword = hashPassword("password123");
+
+  // Password seed dibaca dari env agar tidak hardcoded di repo.
+  // Set SEED_DEFAULT_PASSWORD di .env — wajib diisi, tidak ada fallback.
+  const seedPassword = process.env.SEED_DEFAULT_PASSWORD;
+  if (!seedPassword) {
+    console.error(
+      "ERROR: SEED_DEFAULT_PASSWORD tidak di-set di .env.\n" +
+      "Tambahkan SEED_DEFAULT_PASSWORD ke file .env sebelum menjalankan seed."
+    );
+    process.exit(1);
+  }
+  const hashedPassword = bcrypt.hashSync(seedPassword, 12);
 
   await prisma.user.create({
     data: {
@@ -149,26 +160,31 @@ async function main() {
   }
 
   // Create additional applications to reach 125
-  for (let i = 1; i <= 101; i++) {
-    // Generate a temporary user or link to existing ones (applications can have multiple or user can apply to multiple)
-    // To make it simple, we can link them to genericInterns or create quick users
-    const tempUser = await prisma.user.create({
-      data: {
-        name: `Applicant ${i}`,
-        email: `applicant${i}@example.com`,
-        role: "INTERN",
-        password: hashedPassword
-      }
-    });
+  // Batch insert semua tempUser sekaligus — jauh lebih cepat dari 101 sequential creates
+  const tempUserData = Array.from({ length: 101 }, (_, i) => ({
+    name: `Applicant ${i + 1}`,
+    email: `applicant${i + 1}@example.com`,
+    role: "INTERN" as const,
+    password: hashedPassword,
+  }));
 
-    await prisma.application.create({
-      data: {
-        userId: tempUser.id,
-        programId: i % 2 === 0 ? program2.id : program3.id,
-        status: i % 5 === 0 ? "PENDING" : i % 7 === 0 ? "REJECTED" : "ACCEPTED"
-      }
-    });
-  }
+  await prisma.user.createMany({ data: tempUserData });
+
+  const tempUsers = await prisma.user.findMany({
+    where: { email: { startsWith: "applicant" } },
+    select: { id: true, email: true },
+    orderBy: { email: "asc" },
+  });
+
+  const applicationData = tempUsers.map((tempUser, i) => ({
+    userId: tempUser.id,
+    programId: i % 2 === 0 ? program2.id : program3.id,
+    status: (
+      i % 5 === 0 ? "PENDING" : i % 7 === 0 ? "REJECTED" : "ACCEPTED"
+    ) as "PENDING" | "REJECTED" | "ACCEPTED",
+  }));
+
+  await prisma.application.createMany({ data: applicationData });
 
   console.log("Seeding logbooks...");
   // Create logbooks for active interns
