@@ -5,7 +5,7 @@ import { authConfig } from "@/lib/auth/config";
 import Credentials from "next-auth/providers/credentials";
 import Github from "next-auth/providers/github";
 import { z } from "zod";
-import { verifyPassword } from "@/utils/hash";
+import { hashPassword, verifyPassword } from "@/utils/hash";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,18 +50,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Akun Anda telah ditolak. Hubungi admin untuk informasi lebih lanjut.");
         }
 
-        const passwordsMatch = verifyPassword(password, user.password);
-        if (passwordsMatch) {
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            image: user.image
-          };
+        const { match, needsUpgrade } = verifyPassword(password, user.password);
+
+        if (!match) return null;
+
+        // Hash lama (PBKDF2) — upgrade ke bcrypt secara silent di background.
+        // Tidak memblokir login; user tidak merasakan perbedaan apapun.
+        if (needsUpgrade) {
+          prisma.user
+            .update({
+              where: { id: user.id },
+              data: { password: hashPassword(password) },
+            })
+            .catch((err) =>
+              console.error("[auth] Failed to upgrade password hash:", err)
+            );
         }
 
-        return null;
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          image: user.image,
+        };
       }
     })
   ]
