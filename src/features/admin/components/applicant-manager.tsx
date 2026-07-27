@@ -10,7 +10,36 @@ import {
 import { reviewApplicationAction, createSelectionSessionAction } from "../services/applicant.actions";
 import { Button } from "@/components/ui/button";
 
-type User = { id: string; name: string | null; email: string };
+type User = {
+  id: string;
+  name: string | null;
+  email: string;
+  // Informasi Pribadi
+  nickname?: string | null;
+  phone?: string | null;
+  gender?: string | null;
+  birthPlace?: string | null;
+  birthDate?: Date | null;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  // Pendidikan
+  institution?: string | null;
+  faculty?: string | null;
+  studyProgram?: string | null;
+  studentId?: string | null;
+  semester?: number | null;
+  entryYear?: number | null;
+  graduationYear?: number | null;
+  // Skill & Portfolio
+  portfolioUrl?: string | null;
+  linkedinUrl?: string | null;
+  githubUsername?: string | null;
+  skills?: string | null;
+  bio?: string | null;
+  organizationExperience?: string | null;
+  workExperience?: string | null;
+};
 type Program = { id: string; title: string; period?: string | null };
 
 type Application = {
@@ -484,16 +513,12 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
       {/* Detail Modal */}
       {detailApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800">Detail Pendaftar</h3>
-              <button onClick={() => setDetailApp(null)} className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
+          <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-3">
-                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white font-bold text-sm ${getAvatarColor(detailApp.user.name ?? "?")}`}>
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white font-bold text-sm ${getAvatarColor(detailApp.user.name ?? "?")}`}>
                   {getInitials(detailApp.user.name)}
                 </div>
                 <div>
@@ -501,32 +526,29 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   <p className="text-xs text-slate-500">{detailApp.user.email}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Program</p>
-                  <p className="font-semibold text-slate-700">{detailApp.program.title}</p>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Period</p>
-                  <p className="font-semibold text-slate-700">{detailApp.program.period ?? "—"}</p>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Tanggal Daftar</p>
-                  <p className="font-semibold text-slate-700">
-                    {new Date(detailApp.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-                  </p>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Status</p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    (detailApp.status === "approved" || detailApp.status === "ACCEPTED") ? "bg-emerald-100 text-emerald-700"
-                    : detailApp.status === "rejected" ? "bg-red-100 text-red-600"
-                    : "bg-amber-100 text-amber-600"
-                  }`}>
-                    {(detailApp.status === "approved" || detailApp.status === "ACCEPTED") ? "Diterima" : (detailApp.status === "rejected" || detailApp.status === "REJECTED") ? "Ditolak" : detailApp.status}
-                  </span>
-                </div>
+              <button onClick={() => setDetailApp(null)} className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-5">
+
+              {/* Aplikasi info */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  ["Program",       detailApp.program.title],
+                  ["Period",        detailApp.program.period ?? "—"],
+                  ["Tanggal Daftar", new Date(detailApp.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })],
+                ].map(([label, val]) => (
+                  <div key={String(label)} className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+                    <p className="text-sm font-semibold text-slate-700">{val}</p>
+                  </div>
+                ))}
               </div>
+
+              {/* Motivasi */}
               {detailApp.notes && (
                 <div className="bg-slate-50 rounded-xl p-3 flex gap-2">
                   <MessageSquare className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
@@ -536,6 +558,8 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   </div>
                 </div>
               )}
+
+              {/* CV */}
               {detailApp.cvUrl && (
                 <a href={detailApp.cvUrl} target="_blank" rel="noreferrer"
                   className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-semibold">
@@ -543,7 +567,128 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   Buka Tautan CV / Lampiran
                 </a>
               )}
-              <div className="space-y-2"><p className="text-xs font-semibold text-slate-500">RIWAYAT SELEKSI</p>{detailApp.selectionSessions?.length ? detailApp.selectionSessions.map(item => <div key={item.id} className="rounded-xl bg-slate-50 p-3 text-sm"><p className="font-semibold text-slate-700">{item.title}</p><p className="text-xs text-slate-500">{item.type} · {new Date(item.scheduledAt).toLocaleString("id-ID")} · {item.status}</p>{item.resultNotes && <p className="mt-1 text-xs">{item.resultNotes}</p>}</div>) : <p className="text-sm text-slate-400">Belum ada sesi seleksi.</p>}</div>
+
+              {/* ── Informasi Pribadi ── */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+                  <p className="text-sm font-semibold text-blue-900">Informasi Pribadi</p>
+                  <p className="text-xs text-blue-600">Data kontak dan domisili</p>
+                </div>
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {([
+                    ["Nama Panggilan",  detailApp.user.nickname],
+                    ["Nomor Telepon",   detailApp.user.phone],
+                    ["Tempat Lahir",    detailApp.user.birthPlace],
+                    ["Tanggal Lahir",   detailApp.user.birthDate ? new Date(detailApp.user.birthDate).toLocaleDateString("id-ID") : null],
+                    ["Jenis Kelamin",   detailApp.user.gender],
+                    ["Kota/Kabupaten",  detailApp.user.city],
+                    ["Provinsi",        detailApp.user.province],
+                    ["Alamat",          detailApp.user.address],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label} className={label === "Alamat" ? "col-span-2 sm:col-span-3" : ""}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm text-slate-700 font-medium">{val ?? <span className="text-slate-300 font-normal">—</span>}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Pendidikan ── */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="px-4 py-3 bg-violet-50 border-b border-violet-100">
+                  <p className="text-sm font-semibold text-violet-900">Pendidikan</p>
+                  <p className="text-xs text-violet-600">Informasi akademik</p>
+                </div>
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {([
+                    ["Institusi",      detailApp.user.institution],
+                    ["Fakultas",       detailApp.user.faculty],
+                    ["Program Studi",  detailApp.user.studyProgram],
+                    ["NIM",            detailApp.user.studentId],
+                    ["Semester",       detailApp.user.semester?.toString()],
+                    ["Tahun Masuk",    detailApp.user.entryYear?.toString()],
+                    ["Tahun Lulus",    detailApp.user.graduationYear?.toString()],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm text-slate-700 font-medium">{val ?? <span className="text-slate-300 font-normal">—</span>}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Skill & Portfolio ── */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                  <p className="text-sm font-semibold text-slate-800">Skill & Portfolio</p>
+                  <p className="text-xs text-slate-500">Tautan profesional dan keahlian</p>
+                </div>
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {([
+                    ["Skills",   detailApp.user.skills],
+                    ["GitHub",   detailApp.user.githubUsername],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm text-slate-700 font-medium">{val ?? <span className="text-slate-300 font-normal">—</span>}</p>
+                    </div>
+                  ))}
+                  {([
+                    ["Portfolio URL", detailApp.user.portfolioUrl],
+                    ["LinkedIn URL",  detailApp.user.linkedinUrl],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      {val
+                        ? <a href={val} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline font-medium truncate block">{val}</a>
+                        : <span className="text-sm text-slate-300">—</span>}
+                    </div>
+                  ))}
+                  {detailApp.user.bio && (
+                    <div className="col-span-1 sm:col-span-2">
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Bio</p>
+                      <p className="text-sm text-slate-700">{detailApp.user.bio}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Riwayat Seleksi ── */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="px-4 py-3 bg-amber-50 border-b border-amber-100">
+                  <p className="text-sm font-semibold text-amber-900">Riwayat Seleksi</p>
+                  <p className="text-xs text-amber-600">Sesi seleksi yang telah dijadwalkan</p>
+                </div>
+                <div className="p-4">
+                  {detailApp.selectionSessions?.length ? (
+                    <div className="space-y-2">
+                      {detailApp.selectionSessions.map(item => (
+                        <div key={item.id} className="rounded-xl bg-slate-50 p-3 text-sm">
+                          <p className="font-semibold text-slate-700">{item.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {item.type} · {new Date(item.scheduledAt).toLocaleString("id-ID")} · {item.status}
+                          </p>
+                          {item.score != null && <p className="text-xs text-slate-600 mt-0.5">Skor: {item.score}</p>}
+                          {item.resultNotes && <p className="text-xs text-slate-600 mt-0.5">{item.resultNotes}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400">Belum ada sesi seleksi.</p>
+                  )}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setDetailApp(null)}
+                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>
