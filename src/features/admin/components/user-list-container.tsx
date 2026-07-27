@@ -43,6 +43,38 @@ interface User {
   certificate?: { certNumber: string; issuedAt: Date } | null;
   googleDriveRegistered?: boolean;
   googleDriveFolderUrl?: string | null;
+  // Informasi Pribadi
+  nickname?: string | null;
+  phone?: string | null;
+  gender?: string | null;
+  birthPlace?: string | null;
+  birthDate?: Date | null;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  // Pendidikan
+  institution?: string | null;
+  studyProgram?: string | null;
+  faculty?: string | null;
+  studentId?: string | null;
+  semester?: number | null;
+  entryYear?: number | null;
+  graduationYear?: number | null;
+  // Skill & Portfolio
+  portfolioUrl?: string | null;
+  linkedinUrl?: string | null;
+  githubUsername?: string | null;
+  skills?: string | null;
+  bio?: string | null;
+  organizationExperience?: string | null;
+  workExperience?: string | null;
+  // Informasi Internship
+  internshipPosition?: string | null;
+  internshipStatus?: string | null;
+  internshipStartDate?: Date | null;
+  internshipEndDate?: Date | null;
+  supervisorName?: string | null;
+  documentStatus?: string | null;
 }
 
 interface UserListContainerProps {
@@ -457,16 +489,12 @@ export function UserListContainer({
       {/* ── Detail Modal ── */}
       {detailUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800">Detail Intern</h3>
-              <button onClick={() => setDetailUser(null)} className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
+          <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-3">
-                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white font-bold text-sm ${avatarColor(detailUser.name ?? "?")}`}>
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white font-bold text-sm ${avatarColor(detailUser.name ?? "?")}`}>
                   {initials(detailUser.name)}
                 </div>
                 <div>
@@ -474,30 +502,151 @@ export function UserListContainer({
                   <p className="text-xs text-slate-500">{detailUser.email}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Program</p>
-                  <p className="font-semibold text-slate-700 text-xs">{detailUser.applications?.[0]?.program.title ?? "—"}</p>
+              <button onClick={() => setDetailUser(null)} className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-5">
+
+              {/* ── Informasi Pribadi ── */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+                  <p className="text-sm font-semibold text-blue-900">Informasi Pribadi</p>
+                  <p className="text-xs text-blue-600">Data kontak dan domisili</p>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Mentor</p>
-                  <p className="font-semibold text-slate-700 text-xs">{detailUser.assignedMentor?.name ?? "Belum ditugaskan"}</p>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Status Akun</p>
-                  <p className="font-semibold text-slate-700 text-xs">{detailUser.approvalStatus}</p>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 mb-0.5">Sertifikat</p>
-                  <p className="font-semibold text-slate-700 text-xs">{detailUser.certificate?.certNumber ?? "Belum ada"}</p>
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {([
+                    ["Nama Lengkap",    detailUser.name],
+                    ["Nama Panggilan",  detailUser.nickname],
+                    ["Nomor Telepon",   detailUser.phone],
+                    ["Tempat Lahir",    detailUser.birthPlace],
+                    ["Tanggal Lahir",   detailUser.birthDate ? new Date(detailUser.birthDate).toLocaleDateString("id-ID") : null],
+                    ["Jenis Kelamin",   detailUser.gender],
+                    ["Kota/Kabupaten",  detailUser.city],
+                    ["Provinsi",        detailUser.province],
+                    ["Alamat",          detailUser.address],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label} className={label === "Alamat" ? "col-span-2 sm:col-span-3" : ""}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm text-slate-700 font-medium">{val ?? <span className="text-slate-300 font-normal">—</span>}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
+
+              {/* ── Pendidikan ── */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="px-4 py-3 bg-violet-50 border-b border-violet-100">
+                  <p className="text-sm font-semibold text-violet-900">Pendidikan</p>
+                  <p className="text-xs text-violet-600">Informasi akademik</p>
+                </div>
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {([
+                    ["Institusi",      detailUser.institution],
+                    ["Fakultas",       detailUser.faculty],
+                    ["Program Studi",  detailUser.studyProgram],
+                    ["NIM",            detailUser.studentId],
+                    ["Semester",       detailUser.semester?.toString()],
+                    ["Tahun Masuk",    detailUser.entryYear?.toString()],
+                    ["Tahun Lulus",    detailUser.graduationYear?.toString()],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm text-slate-700 font-medium">{val ?? <span className="text-slate-300 font-normal">—</span>}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Skill & Portfolio ── */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                  <p className="text-sm font-semibold text-slate-800">Skill & Portfolio</p>
+                  <p className="text-xs text-slate-500">Tautan profesional dan keahlian</p>
+                </div>
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {([
+                    ["Skills",  detailUser.skills],
+                    ["GitHub",  detailUser.githubUsername],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm text-slate-700 font-medium">{val ?? <span className="text-slate-300 font-normal">—</span>}</p>
+                    </div>
+                  ))}
+                  {([
+                    ["Portfolio URL", detailUser.portfolioUrl],
+                    ["LinkedIn URL",  detailUser.linkedinUrl],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      {val
+                        ? <a href={val} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline font-medium truncate block">{val}</a>
+                        : <span className="text-sm text-slate-300">—</span>}
+                    </div>
+                  ))}
+                  {detailUser.bio && (
+                    <div className="col-span-1 sm:col-span-2">
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Bio</p>
+                      <p className="text-sm text-slate-700">{detailUser.bio}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Informasi Internship ── */}
+              <div className="rounded-xl border border-slate-100 overflow-hidden">
+                <div className="px-4 py-3 bg-amber-50 border-b border-amber-100">
+                  <p className="text-sm font-semibold text-amber-900">Informasi Internship</p>
+                  <p className="text-xs text-amber-600">Data penempatan</p>
+                </div>
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {([
+                    ["Program",    detailUser.applications?.[0]?.program.title],
+                    ["Posisi",     detailUser.internshipPosition],
+                    ["Supervisor", detailUser.supervisorName],
+                    ["Status",     detailUser.internshipStatus],
+                    ["Dokumen",    detailUser.documentStatus],
+                    ["Mentor",     detailUser.assignedMentor?.name],
+                    ["Sertifikat", detailUser.certificate?.certNumber],
+                    ["Mulai",      detailUser.internshipStartDate ? new Date(detailUser.internshipStartDate).toLocaleDateString("id-ID") : null],
+                    ["Selesai",    detailUser.internshipEndDate ? new Date(detailUser.internshipEndDate).toLocaleDateString("id-ID") : null],
+                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                    <div key={label}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="text-sm text-slate-700 font-medium">{val ?? <span className="text-slate-300 font-normal">—</span>}</p>
+                    </div>
+                  ))}
+                  {detailUser.googleDriveFolderUrl && (
+                    <div className="col-span-2 sm:col-span-3">
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Google Drive</p>
+                      <a href={detailUser.googleDriveFolderUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline font-medium truncate block">
+                        {detailUser.googleDriveFolderUrl}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* CV link */}
               {detailUser.applications?.[0]?.cvUrl && (
                 <a href={detailUser.applications[0].cvUrl} target="_blank" rel="noreferrer"
                   className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-semibold">
                   Buka Tautan CV / Lampiran
                 </a>
               )}
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-4 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setDetailUser(null)}
+                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>

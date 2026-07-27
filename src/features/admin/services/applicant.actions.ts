@@ -30,7 +30,22 @@ export async function getAllApplications() {
 
   return prisma.application.findMany({
     include: {
-      user: { select: { id: true, name: true, email: true, role: true } },
+      user: {
+        select: {
+          id: true, name: true, email: true, role: true,
+          // Informasi Pribadi
+          nickname: true, phone: true, gender: true,
+          birthPlace: true, birthDate: true,
+          address: true, city: true, province: true,
+          // Pendidikan
+          institution: true, faculty: true, studyProgram: true,
+          studentId: true, semester: true, entryYear: true, graduationYear: true,
+          // Skill & Portfolio
+          portfolioUrl: true, linkedinUrl: true, githubUsername: true,
+          skills: true, bio: true,
+          organizationExperience: true, workExperience: true,
+        }
+      },
       program: true,
       selectionSessions: {
         include: { interviewer: { select: { id: true, name: true, email: true } } },

@@ -35,6 +35,35 @@ export async function getUsersByRole(role: UserRole) {
         institution: true,
         studyProgram: true,
         internshipStatus: true,
+        // Informasi Pribadi
+        nickname: true,
+        phone: true,
+        gender: true,
+        birthPlace: true,
+        birthDate: true,
+        address: true,
+        city: true,
+        province: true,
+        // Pendidikan
+        faculty: true,
+        studentId: true,
+        semester: true,
+        entryYear: true,
+        graduationYear: true,
+        // Skill & Portfolio
+        portfolioUrl: true,
+        linkedinUrl: true,
+        githubUsername: true,
+        skills: true,
+        bio: true,
+        organizationExperience: true,
+        workExperience: true,
+        // Informasi Internship
+        internshipPosition: true,
+        internshipStartDate: true,
+        internshipEndDate: true,
+        supervisorName: true,
+        documentStatus: true,
         applications: {
           select: {
             id: true,

@@ -40,6 +40,38 @@ interface User {
   certificate?: { certNumber: string; issuedAt: Date } | null;
   googleDriveRegistered?: boolean;
   googleDriveFolderUrl?: string | null;
+  // Informasi Pribadi
+  nickname?: string | null;
+  phone?: string | null;
+  gender?: string | null;
+  birthPlace?: string | null;
+  birthDate?: Date | null;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  // Pendidikan
+  institution?: string | null;
+  studyProgram?: string | null;
+  faculty?: string | null;
+  studentId?: string | null;
+  semester?: number | null;
+  entryYear?: number | null;
+  graduationYear?: number | null;
+  // Skill & Portfolio
+  portfolioUrl?: string | null;
+  linkedinUrl?: string | null;
+  githubUsername?: string | null;
+  skills?: string | null;
+  bio?: string | null;
+  organizationExperience?: string | null;
+  workExperience?: string | null;
+  // Informasi Internship
+  internshipPosition?: string | null;
+  internshipStatus?: string | null;
+  internshipStartDate?: Date | null;
+  internshipEndDate?: Date | null;
+  supervisorName?: string | null;
+  documentStatus?: string | null;
 }
 
 interface UserListProps {
