@@ -18,16 +18,11 @@ function isAllowedEmail(email: string): boolean {
 
 export const registerSchema = loginSchema.extend({
   name: z.string().min(2),
-  role: z.enum(["ADMIN", "MENTOR", "INTERN"]).optional().default("INTERN")
+  role: z.enum(["MENTOR", "INTERN"]).optional().default("INTERN")
 }).refine(
-  (data) => {
-    // ADMIN can use any email
-    if (data.role === "ADMIN") return true;
-    // INTERN and MENTOR must use @gmail.com or *.ac.id
-    return isAllowedEmail(data.email);
-  },
+  (data) => isAllowedEmail(data.email),
   {
-    message: "Email untuk Intern dan Mentor harus menggunakan @gmail.com atau domain universitas (contoh: @student.ui.ac.id)",
+    message: "Email harus menggunakan @gmail.com atau domain universitas (contoh: @student.ui.ac.id)",
     path: ["email"]
   }
 );
