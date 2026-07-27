@@ -181,7 +181,6 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
               >
                 <option value="INTERN">Intern (Peserta Magang)</option>
                 <option value="MENTOR">Mentor (Pembimbing)</option>
-                <option value="ADMIN">Admin (Pengelola)</option>
               </select>
             </div>
           )}
