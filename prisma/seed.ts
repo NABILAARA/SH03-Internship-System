@@ -15,16 +15,7 @@ async function main() {
 
   console.log("Seeding users...");
 
-  // Password seed dibaca dari env agar tidak hardcoded di repo.
-  // Set SEED_DEFAULT_PASSWORD di .env — wajib diisi, tidak ada fallback.
-  const seedPassword = process.env.SEED_DEFAULT_PASSWORD;
-  if (!seedPassword) {
-    console.error(
-      "ERROR: SEED_DEFAULT_PASSWORD tidak di-set di .env.\n" +
-      "Tambahkan SEED_DEFAULT_PASSWORD ke file .env sebelum menjalankan seed."
-    );
-    process.exit(1);
-  }
+  const seedPassword = process.env.SEED_DEFAULT_PASSWORD ?? "password123";
   const hashedPassword = bcrypt.hashSync(seedPassword, 12);
 
   await prisma.user.create({
