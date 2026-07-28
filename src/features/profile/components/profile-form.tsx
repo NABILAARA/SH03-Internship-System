@@ -210,8 +210,48 @@ export function ProfileForm({ user }: Readonly<ProfileFormProps>) {
   };
 
   const avatarInitial = (user.name?.[0] ?? user.email[0]).toUpperCase();
-  const profileFields = [internData.name, internData.phone, internData.institution, internData.studyProgram, internData.studentId, internData.city, internData.skills, internData.portfolioUrl];
-  const completeness = Math.round((profileFields.filter(Boolean).length / profileFields.length) * 100);
+
+  // ── Completeness — 21 field total ─────────────────────────
+  const personalFields = [
+    internData.name,        // 1. Nama lengkap
+    internData.nickname,    // 2. Nama panggilan
+    internData.phone,       // 3. Nomor telepon
+    internData.birthPlace,  // 4. Tempat lahir
+    internData.birthDate,   // 5. Tanggal lahir
+    internData.gender,      // 6. Jenis kelamin
+    internData.address,     // 7. Alamat lengkap
+    internData.city,        // 8. Kota/Kabupaten
+    internData.province,    // 9. Provinsi
+  ];
+  const educationFields = [
+    internData.institution,   // 10. Institusi
+    internData.faculty,       // 11. Fakultas
+    internData.studyProgram,  // 12. Program studi
+    internData.studentId,     // 13. NIM
+    internData.semester,      // 14. Semester
+    internData.entryYear,     // 15. Tahun masuk
+    internData.graduationYear,// 16. Tahun lulus
+  ];
+  const skillFields = [
+    internData.portfolioUrl,  // 17. Portfolio URL
+    internData.linkedinUrl,   // 18. LinkedIn URL
+    internData.skills,        // 19. Skills
+    internData.githubUsername,// 20. GitHub username
+    internData.bio,           // 21. Tentang diri
+  ];
+
+  const allFields      = [...personalFields, ...educationFields, ...skillFields];
+  const TOTAL          = allFields.length; // 21
+  const filledTotal    = allFields.filter(Boolean).length;
+  const completeness   = Math.round((filledTotal / TOTAL) * 100);
+
+  const personalFilled  = personalFields.filter(Boolean).length;
+  const educationFilled = educationFields.filter(Boolean).length;
+  const skillFilled     = skillFields.filter(Boolean).length;
+
+  const personalPct  = Math.round((personalFilled  / personalFields.length)  * 100);
+  const educationPct = Math.round((educationFilled / educationFields.length) * 100);
+  const skillPct     = Math.round((skillFilled     / skillFields.length)     * 100);
   const updateInternField = (key: keyof typeof internData, value: string) => setInternData(current => ({ ...current, [key]: value }));
   const handleInternProfileSave = async (event: React.FormEvent) => {
     event.preventDefault(); setInternLoading(true); setInternMessage(null);
@@ -253,9 +293,73 @@ export function ProfileForm({ user }: Readonly<ProfileFormProps>) {
 
       {user.role === "INTERN" && (
         <form onSubmit={handleInternProfileSave} className="space-y-5">
-          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 flex items-center justify-between gap-4">
-            <div><p className="font-semibold text-blue-900">Kelengkapan profil: {completeness}%</p><p className="text-xs text-blue-700">Lengkapi kontak, pendidikan, dan portfolio untuk administrasi magang.</p></div>
-            <div className="h-2 w-28 rounded-full bg-blue-100 overflow-hidden"><div className="h-full bg-blue-600" style={{ width: `${completeness}%` }} /></div>
+          {/* ── Completeness Card ── */}
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 space-y-3">
+            {/* Header row */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <p className="font-semibold text-blue-900">Kelengkapan profil</p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  {filledTotal} dari {TOTAL} informasi terisi
+                </p>
+              </div>
+              <span className={`text-2xl font-extrabold ${completeness === 100 ? "text-emerald-600" : "text-blue-600"}`}>
+                {completeness}%
+              </span>
+            </div>
+
+            {/* Bar keseluruhan */}
+            <div className="h-2.5 w-full rounded-full bg-blue-100 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${completeness === 100 ? "bg-emerald-500" : "bg-blue-600"}`}
+                style={{ width: `${completeness}%` }}
+              />
+            </div>
+
+            {/* Sub-bar per section — 1 kolom di mobile, 3 kolom di sm+ */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              {/* Informasi Pribadi */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-slate-700">Informasi Pribadi</span>
+                  <span className="text-slate-400">{personalFilled}/{personalFields.length}</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                    style={{ width: `${personalPct}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Pendidikan */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-slate-700">Pendidikan</span>
+                  <span className="text-slate-400">{educationFilled}/{educationFields.length}</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-violet-500 transition-all duration-500"
+                    style={{ width: `${educationPct}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Skill & Portfolio */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-slate-700">Skill & Portfolio</span>
+                  <span className="text-slate-400">{skillFilled}/{skillFields.length}</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-slate-600 transition-all duration-500"
+                    style={{ width: `${skillPct}%` }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           <SectionCard icon={<User className="h-4 w-4 text-blue-600" />} title="Informasi Pribadi" description="Data kontak dan domisili yang dapat Anda perbarui">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
