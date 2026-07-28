@@ -24,6 +24,7 @@ export async function getPublishedPrograms() {
 
 export async function applyForProgramAction(formData: {
   programId: string;
+  position: string;
   cvUrl: string;
   notes: string;
 }) {
@@ -34,9 +35,9 @@ export async function applyForProgramAction(formData: {
     }
 
     if (!formData.programId) return { error: "Program magang tidak valid." };
+    if (!formData.position) return { error: "Posisi yang dilamar wajib dipilih." };
     if (!formData.cvUrl) return { error: "Link CV wajib diisi." };
 
-    // Block if user already has an approved application (accepted in a program)
     const approvedApp = await prisma.application.findFirst({
       where: { userId: session.user.id, status: "ACCEPTED" }
     });
@@ -44,11 +45,9 @@ export async function applyForProgramAction(formData: {
       return { error: "Anda sudah diterima di program magang. Tidak dapat mendaftar ke program lain." };
     }
 
-    // Check if user has already applied to this specific program
     const existing = await prisma.application.findFirst({
       where: { userId: session.user.id, programId: formData.programId }
     });
-
     if (existing) {
       return { error: "Anda sudah mendaftar di program magang ini." };
     }
@@ -57,6 +56,7 @@ export async function applyForProgramAction(formData: {
       data: {
         userId: session.user.id,
         programId: formData.programId,
+        position: formData.position,
         cvUrl: formData.cvUrl,
         notes: formData.notes,
         status: "PENDING"
@@ -74,6 +74,7 @@ export async function applyForProgramAction(formData: {
 
 export async function resubmitApplicationAction(formData: {
   applicationId: string;
+  position: string;
   cvUrl: string;
   notes: string;
 }) {
@@ -83,9 +84,9 @@ export async function resubmitApplicationAction(formData: {
       return { error: "Anda harus login terlebih dahulu." };
     }
 
+    if (!formData.position) return { error: "Posisi yang dilamar wajib dipilih." };
     if (!formData.cvUrl) return { error: "Link CV wajib diisi." };
 
-    // Verify the application belongs to the current user and is rejected
     const application = await prisma.application.findFirst({
       where: {
         id: formData.applicationId,
@@ -101,6 +102,7 @@ export async function resubmitApplicationAction(formData: {
     await prisma.application.update({
       where: { id: formData.applicationId },
       data: {
+        position: formData.position,
         cvUrl: formData.cvUrl,
         notes: formData.notes,
         status: "PENDING"

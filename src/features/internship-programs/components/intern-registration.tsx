@@ -17,6 +17,7 @@ type Application = {
   id: string;
   programId: string;
   status: string;
+  position: string | null;
   cvUrl: string | null;
   notes: string | null;
   createdAt: Date;
@@ -28,17 +29,33 @@ type InternRegistrationProps = {
   applications: Application[];
 };
 
+const INTERNSHIP_POSITIONS = [
+  "UI/UX Designer",
+  "Frontend Web Developer",
+  "Backend Engineer",
+  "QA/Software Tester & Documentation",
+  "Repository E-Prints",
+  "Social Media Specialist",
+  "Corporate Identity Designer",
+  "AI & Security Engineer",
+  "DevOps Engineer",
+  "AI/LM Engineer",
+  "Academic Publishing Intern",
+  "Branding and Graphic Designer",
+] as const;
+
 export function InternRegistration({ programs, applications: initialApps }: Readonly<InternRegistrationProps>) {
   const [applications, setApplications] = useState<Application[]>(initialApps);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [position, setPosition] = useState("");
   const [cvUrl, setCvUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Resubmit state — holds the rejected application being edited
   const [resubmitApp, setResubmitApp] = useState<Application | null>(null);
+  const [resubmitPosition, setResubmitPosition] = useState("");
   const [resubmitCvUrl, setResubmitCvUrl] = useState("");
   const [resubmitNotes, setResubmitNotes] = useState("");
   const [resubmitError, setResubmitError] = useState<string | null>(null);
@@ -47,6 +64,7 @@ export function InternRegistration({ programs, applications: initialApps }: Read
 
   const handleOpenForm = (program: Program) => {
     setSelectedProgram(program);
+    setPosition("");
     setCvUrl("");
     setNotes("");
     setError(null);
@@ -59,6 +77,7 @@ export function InternRegistration({ programs, applications: initialApps }: Read
 
   const handleOpenResubmit = (app: Application) => {
     setResubmitApp(app);
+    setResubmitPosition(app.position ?? "");
     setResubmitCvUrl(app.cvUrl ?? "");
     setResubmitNotes(app.notes ?? "");
     setResubmitError(null);
@@ -72,6 +91,10 @@ export function InternRegistration({ programs, applications: initialApps }: Read
   const handleResubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resubmitApp) return;
+    if (!resubmitPosition) {
+      setResubmitError("Posisi yang dilamar wajib dipilih.");
+      return;
+    }
     if (!resubmitCvUrl) {
       setResubmitError("Link CV wajib diisi.");
       return;
@@ -81,6 +104,7 @@ export function InternRegistration({ programs, applications: initialApps }: Read
     try {
       const res = await resubmitApplicationAction({
         applicationId: resubmitApp.id,
+        position: resubmitPosition,
         cvUrl: resubmitCvUrl,
         notes: resubmitNotes
       });
@@ -91,7 +115,7 @@ export function InternRegistration({ programs, applications: initialApps }: Read
         setApplications((prev) =>
           prev.map((a) =>
             a.id === resubmitApp.id
-              ? { ...a, status: "pending", cvUrl: resubmitCvUrl, notes: resubmitNotes }
+              ? { ...a, status: "pending", position: resubmitPosition, cvUrl: resubmitCvUrl, notes: resubmitNotes }
               : a
           )
         );
@@ -108,6 +132,10 @@ export function InternRegistration({ programs, applications: initialApps }: Read
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProgram) return;
+    if (!position) {
+      setError("Posisi yang dilamar wajib dipilih.");
+      return;
+    }
     if (!cvUrl) {
       setError("Link CV wajib diisi.");
       return;
@@ -119,6 +147,7 @@ export function InternRegistration({ programs, applications: initialApps }: Read
     try {
       const res = await applyForProgramAction({
         programId: selectedProgram.id,
+        position,
         cvUrl,
         notes
       });
@@ -127,20 +156,18 @@ export function InternRegistration({ programs, applications: initialApps }: Read
         setError(res.error);
       } else {
         setSuccess(true);
-        // Add new application to state for instant UI update
         const newApp: Application = {
           id: Math.random().toString(),
           programId: selectedProgram.id,
           status: "pending",
+          position,
           cvUrl,
           notes,
           createdAt: new Date(),
           program: selectedProgram
         };
         setApplications((prev) => [newApp, ...prev]);
-        setTimeout(() => {
-          setSelectedProgram(null);
-        }, 1500);
+        setTimeout(() => setSelectedProgram(null), 1500);
       }
     } catch (err) {
       console.error(err);
@@ -175,9 +202,16 @@ export function InternRegistration({ programs, applications: initialApps }: Read
               >
                 <div>
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-bold text-slate-800 text-sm md:text-base">
-                      {app.program.title}
-                    </h3>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-sm md:text-base">
+                        {app.program.title}
+                      </h3>
+                      {app.position && (
+                        <p className="text-xs text-blue-600 font-medium mt-0.5">
+                          Posisi: {app.position}
+                        </p>
+                      )}
+                    </div>
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1 ${
                         app.status === "approved"
@@ -314,7 +348,7 @@ export function InternRegistration({ programs, applications: initialApps }: Read
             <div className="flex justify-between items-center border-b pb-3">
               <div>
                 <h3 className="text-lg font-bold text-slate-800">Formulir Pendaftaran Magang</h3>
-                <p className="text-xs text-slate-500">Posisi: {selectedProgram.title}</p>
+                <p className="text-xs text-slate-500">Program: {selectedProgram.title}</p>
               </div>
               <button
                 onClick={handleCloseForm}
@@ -338,6 +372,25 @@ export function InternRegistration({ programs, applications: initialApps }: Read
                     <span>{error}</span>
                   </div>
                 )}
+
+                {/* Dropdown posisi */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700" htmlFor="position">
+                    Posisi yang Dilamar <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="position"
+                    value={position}
+                    onChange={(e) => setPosition(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                  >
+                    <option value="">-- Pilih Posisi --</option>
+                    {INTERNSHIP_POSITIONS.map((pos) => (
+                      <option key={pos} value={pos}>{pos}</option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700" htmlFor="cv-link">
@@ -426,7 +479,7 @@ export function InternRegistration({ programs, applications: initialApps }: Read
             ) : (
               <form onSubmit={handleResubmit} className="space-y-4">
                 <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-2.5 text-xs text-amber-700">
-                  Perbarui link CV Anda lalu kirim ulang. Status akan kembali ke <strong>Pending</strong> untuk ditinjau admin.
+                  Perbarui posisi dan link CV Anda lalu kirim ulang. Status akan kembali ke <strong>Pending</strong> untuk ditinjau admin.
                 </div>
 
                 {resubmitError && (
@@ -435,6 +488,25 @@ export function InternRegistration({ programs, applications: initialApps }: Read
                     <span>{resubmitError}</span>
                   </div>
                 )}
+
+                {/* Dropdown posisi */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700" htmlFor="resubmit-position">
+                    Posisi yang Dilamar <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="resubmit-position"
+                    value={resubmitPosition}
+                    onChange={(e) => setResubmitPosition(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                  >
+                    <option value="">-- Pilih Posisi --</option>
+                    {INTERNSHIP_POSITIONS.map((pos) => (
+                      <option key={pos} value={pos}>{pos}</option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700" htmlFor="resubmit-cv-link">

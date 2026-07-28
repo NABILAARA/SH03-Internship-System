@@ -73,9 +73,14 @@ export async function updateApplicationStatusAction(
 
     if (status === "ACCEPTED") {
       // Reuse the applicant account; never create a second user.
+      // Copy position dari application ke internshipPosition user
       await prisma.user.update({
         where: { id: application.userId },
-        data: { role: "INTERN", approvalStatus: "APPROVED" },
+        data: {
+          role: "INTERN",
+          approvalStatus: "APPROVED",
+          internshipPosition: application.position ?? undefined,
+        },
       });
 
       const assignment = await prisma.mentorIntern.findUnique({ where: { internId: application.userId } });
