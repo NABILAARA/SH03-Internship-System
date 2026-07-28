@@ -140,10 +140,20 @@ export function UserListContainer({
 
   // Stat counts
   const counts = useMemo(() => {
-    const total   = users.length;
-    const ongoing = users.filter(u => u.applications?.some(a => a.status === "approved") && !u.certificate).length;
-    const upcoming = users.filter(u => !u.applications || u.applications.length === 0).length;
+    const total     = users.length;
     const completed = users.filter(u => !!u.certificate).length;
+    // ongoing  = ACCEPTED + sudah ada mentor
+    const ongoing   = users.filter(u =>
+      !u.certificate &&
+      u.applications?.some(a => a.status === "ACCEPTED") &&
+      !!u.assignedMentor
+    ).length;
+    // upcoming = ACCEPTED + belum ada mentor
+    const upcoming  = users.filter(u =>
+      !u.certificate &&
+      u.applications?.some(a => a.status === "ACCEPTED") &&
+      !u.assignedMentor
+    ).length;
     return { total, ongoing, upcoming, completed };
   }, [users]);
 
@@ -159,12 +169,13 @@ export function UserListContainer({
         filterProgram === "all" ||
         u.applications?.some(a => a.program.title === filterProgram);
 
-      const hasApproved = u.applications?.some(a => a.status === "approved");
-      const hasCert = !!u.certificate;
+      const hasAccepted = u.applications?.some(a => a.status === "ACCEPTED");
+      const hasCert     = !!u.certificate;
+      const hasMentor   = !!u.assignedMentor;
       const matchStatus =
         filterStatus === "all" ||
-        (filterStatus === "ongoing"   && hasApproved && !hasCert) ||
-        (filterStatus === "upcoming"  && (!u.applications || u.applications.length === 0)) ||
+        (filterStatus === "ongoing"   && hasAccepted && hasMentor  && !hasCert) ||
+        (filterStatus === "upcoming"  && hasAccepted && !hasMentor && !hasCert) ||
         (filterStatus === "completed" && hasCert);
 
       const matchGoogleDrive = filterGoogleDrive === "all" || (filterGoogleDrive === "registered" ? u.googleDriveRegistered : !u.googleDriveRegistered);

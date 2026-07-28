@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Briefcase, Link as LinkIcon, Send, X, CheckCircle, Clock, AlertTriangle, HelpCircle, RefreshCw } from "lucide-react";
+import { Briefcase, Link as LinkIcon, Send, X, CheckCircle, Clock, AlertTriangle, HelpCircle, RefreshCw, Calendar, MapPin, Video, User, Bell } from "lucide-react";
 import { applyForProgramAction, resubmitApplicationAction } from "../services/application.actions";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +13,21 @@ type Program = {
   period: string | null;
 };
 
+type SelectionSession = {
+  id: string;
+  title: string;
+  type: string;
+  scheduledAt: Date;
+  method: string;
+  location: string | null;
+  meetingLink: string | null;
+  interviewerName: string | null;
+  notes: string | null;
+  status: string;
+  score: number | null;
+  resultNotes: string | null;
+};
+
 type Application = {
   id: string;
   programId: string;
@@ -22,6 +37,7 @@ type Application = {
   notes: string | null;
   createdAt: Date;
   program: Program;
+  selectionSessions?: SelectionSession[];
 };
 
 type InternRegistrationProps = {
@@ -177,7 +193,52 @@ export function InternRegistration({ programs, applications: initialApps }: Read
     }
   };
 
-  const hasApprovedApplication = applications.some((a) => a.status === "approved");
+  const hasApprovedApplication = applications.some((a) =>
+    a.status === "ACCEPTED" || a.status === "approved"
+  );
+
+  // Helper — label dan warna status
+  function getStatusBadge(status: string) {
+    switch (status.toUpperCase()) {
+      case "ACCEPTED":
+      case "APPROVED":
+        return { label: "Diterima", cls: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: <CheckCircle className="h-3 w-3" /> };
+      case "REJECTED":
+        return { label: "Ditolak", cls: "bg-red-50 text-red-600 border-red-100", icon: <X className="h-3 w-3" /> };
+      case "IN_REVIEW":
+        return { label: "Sedang Direview", cls: "bg-blue-50 text-blue-600 border-blue-100", icon: <Clock className="h-3 w-3" /> };
+      case "INTERVIEW":
+        return { label: "Tahap Seleksi", cls: "bg-violet-50 text-violet-600 border-violet-100", icon: <Bell className="h-3 w-3" /> };
+      case "WITHDRAWN":
+        return { label: "Ditarik", cls: "bg-slate-50 text-slate-500 border-slate-100", icon: <X className="h-3 w-3" /> };
+      default:
+        return { label: "Pending", cls: "bg-amber-50 text-amber-600 border-amber-100", icon: <Clock className="h-3 w-3" /> };
+    }
+  }
+
+  // Helper — label tipe sesi
+  function getSessionTypeLabel(type: string) {
+    const map: Record<string, string> = {
+      ADMINISTRATION: "Administrasi",
+      INTERVIEW: "Interview",
+      TECHNICAL_TEST: "Technical Test",
+      HR_INTERVIEW: "HR Interview",
+      FINAL_INTERVIEW: "Final Interview",
+      OTHER: "Lainnya",
+    };
+    return map[type] ?? type;
+  }
+
+  // Helper — label status sesi
+  function getSessionStatusLabel(status: string) {
+    const map: Record<string, { label: string; cls: string }> = {
+      SCHEDULED:   { label: "Terjadwal",    cls: "bg-blue-100 text-blue-700" },
+      COMPLETED:   { label: "Selesai",      cls: "bg-emerald-100 text-emerald-700" },
+      CANCELLED:   { label: "Dibatalkan",   cls: "bg-red-100 text-red-600" },
+      RESCHEDULED: { label: "Dijadwalkan Ulang", cls: "bg-amber-100 text-amber-700" },
+    };
+    return map[status] ?? { label: status, cls: "bg-slate-100 text-slate-600" };
+  }
 
   return (
     <div className="space-y-8">
@@ -195,12 +256,22 @@ export function InternRegistration({ programs, applications: initialApps }: Read
             <span>Status Pendaftaran Saya</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {applications.map((app) => (
+            {applications.map((app) => {
+              const badge = getStatusBadge(app.status);
+              const upcomingSessions = app.selectionSessions?.filter(
+                s => s.status === "SCHEDULED" || s.status === "RESCHEDULED"
+              ) ?? [];
+              const isInSelection = app.status === "IN_REVIEW" || app.status === "INTERVIEW";
+
+              return (
               <div
                 key={app.id}
-                className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm flex flex-col justify-between"
+                className={`bg-white border rounded-xl p-5 shadow-sm flex flex-col justify-between ${
+                  isInSelection ? "border-violet-200 ring-1 ring-violet-100" : "border-slate-100"
+                }`}
               >
                 <div>
+                  {/* Header */}
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-bold text-slate-800 text-sm md:text-base">
@@ -212,65 +283,129 @@ export function InternRegistration({ programs, applications: initialApps }: Read
                         </p>
                       )}
                     </div>
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1 ${
-                        app.status === "approved"
-                          ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                          : app.status === "rejected"
-                          ? "bg-red-50 text-red-600 border border-red-100"
-                          : "bg-amber-50 text-amber-600 border border-amber-100"
-                      }`}
-                    >
-                      {app.status === "approved" ? (
-                        <CheckCircle className="h-3 w-3" />
-                      ) : app.status === "rejected" ? (
-                        <X className="h-3 w-3" />
-                      ) : (
-                        <Clock className="h-3 w-3" />
-                      )}
-                      <span>
-                        {app.status === "approved"
-                          ? "Diterima"
-                          : app.status === "rejected"
-                          ? "Ditolak"
-                          : "Pending"}
-                      </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1 border ${badge.cls}`}>
+                      {badge.icon}
+                      <span>{badge.label}</span>
                     </span>
                   </div>
+
+                  {/* Tanggal daftar */}
                   <p className="text-slate-500 text-xs mb-3 flex items-center gap-1">
                     <span>Terdaftar pada:</span>
                     <span className="font-medium text-slate-700">
                       {new Date(app.createdAt).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric"
+                        day: "numeric", month: "long", year: "numeric"
                       })}
                     </span>
                   </p>
+
+                  {/* Notifikasi seleksi aktif */}
+                  {isInSelection && upcomingSessions.length > 0 && (
+                    <div className="mb-3 rounded-lg bg-violet-50 border border-violet-100 p-3 space-y-2">
+                      <p className="text-xs font-semibold text-violet-800 flex items-center gap-1.5">
+                        <Bell className="h-3.5 w-3.5" />
+                        Jadwal Seleksi Mendatang
+                      </p>
+                      {upcomingSessions.map(session => (
+                        <div key={session.id} className="rounded-lg bg-white border border-violet-100 p-3 space-y-1.5">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-slate-800">{session.title}</p>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getSessionStatusLabel(session.status).cls}`}>
+                              {getSessionStatusLabel(session.status).label}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 font-medium">
+                            {getSessionTypeLabel(session.type)}
+                          </p>
+                          {/* Waktu */}
+                          <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                            <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                            <span>
+                              {new Date(session.scheduledAt).toLocaleDateString("id-ID", {
+                                weekday: "long", day: "numeric", month: "long", year: "numeric"
+                              })}
+                              {" · "}
+                              {new Date(session.scheduledAt).toLocaleTimeString("id-ID", {
+                                hour: "2-digit", minute: "2-digit"
+                              })} WIB
+                            </span>
+                          </div>
+                          {/* Metode */}
+                          {session.method === "ONLINE" ? (
+                            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                              <Video className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              {session.meetingLink ? (
+                                <a href={session.meetingLink} target="_blank" rel="noreferrer"
+                                  className="text-blue-600 hover:underline font-medium truncate">
+                                  {session.meetingLink}
+                                </a>
+                              ) : (
+                                <span>Online — link belum tersedia</span>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                              <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span>{session.location ?? "Lokasi belum ditentukan"}</span>
+                            </div>
+                          )}
+                          {/* Pewawancara */}
+                          {session.interviewerName && (
+                            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                              <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span>{session.interviewerName}</span>
+                            </div>
+                          )}
+                          {/* Catatan */}
+                          {session.notes && (
+                            <p className="text-xs text-slate-500 italic mt-1">{session.notes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Riwayat sesi yang sudah selesai */}
+                  {(app.selectionSessions?.filter(s => s.status === "COMPLETED").length ?? 0) > 0 && (
+                    <div className="mb-3 rounded-lg bg-slate-50 border border-slate-100 p-3 space-y-1.5">
+                      <p className="text-xs font-semibold text-slate-600 mb-1.5">Riwayat Sesi</p>
+                      {app.selectionSessions!.filter(s => s.status === "COMPLETED").map(session => (
+                        <div key={session.id} className="flex items-center justify-between text-xs text-slate-500 gap-2 flex-wrap">
+                          <span className="font-medium text-slate-700">{session.title}</span>
+                          <div className="flex items-center gap-2">
+                            {session.score != null && (
+                              <span className="font-bold text-slate-700">Skor: {session.score}</span>
+                            )}
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getSessionStatusLabel(session.status).cls}`}>
+                              {getSessionStatusLabel(session.status).label}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {/* CV link */}
                 {app.cvUrl && (
-                  <a
-                    href={app.cvUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-semibold self-start"
-                  >
+                  <a href={app.cvUrl} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-semibold self-start mb-2">
                     <LinkIcon className="h-3.5 w-3.5" />
                     <span>Lihat CV yang Dikirim</span>
                   </a>
                 )}
-                {app.status === "rejected" && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleOpenResubmit(app)}
-                    className="mt-2 self-start bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1.5"
-                  >
+
+                {/* Tombol kirim ulang */}
+                {(app.status === "REJECTED" || app.status === "rejected") && (
+                  <Button size="sm" onClick={() => handleOpenResubmit(app)}
+                    className="mt-2 self-start bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1.5">
                     <RefreshCw className="h-3.5 w-3.5" />
                     Edit &amp; Kirim Ulang
                   </Button>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
