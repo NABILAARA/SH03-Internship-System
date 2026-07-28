@@ -10,7 +10,26 @@ export async function getInternApplications() {
 
   return await prisma.application.findMany({
     where: { userId: session.user.id },
-    include: { program: true },
+    include: {
+      program: true,
+      selectionSessions: {
+        orderBy: { scheduledAt: "asc" },
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          scheduledAt: true,
+          method: true,
+          location: true,
+          meetingLink: true,
+          interviewerName: true,
+          notes: true,
+          status: true,
+          score: true,
+          resultNotes: true,
+        }
+      }
+    },
     orderBy: { createdAt: "desc" }
   });
 }

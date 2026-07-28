@@ -103,17 +103,20 @@ function initials(name: string | null) {
 /** Derive a status label + colour from the user's data */
 function getStatus(u: User): { label: string; cls: string } {
   if (u.certificate) return { label: "Completed", cls: "bg-slate-100 text-slate-600" };
-  const approved = u.applications?.some(a => a.status === "approved");
-  if (approved) return { label: "On Going", cls: "bg-emerald-100 text-emerald-700" };
-  const pending = u.applications?.some(a => a.status === "pending");
+  const accepted = u.applications?.some(a => a.status === "ACCEPTED");
+  if (accepted && u.assignedMentor) return { label: "On Going", cls: "bg-emerald-100 text-emerald-700" };
+  if (accepted && !u.assignedMentor) return { label: "Upcoming", cls: "bg-blue-100 text-blue-600" };
+  const pending = u.applications?.some(a => a.status === "pending" || a.status === "PENDING");
   if (pending) return { label: "Pending", cls: "bg-amber-100 text-amber-700" };
-  return { label: "Upcoming", cls: "bg-blue-100 text-blue-600" };
+  return { label: "—", cls: "bg-slate-100 text-slate-400" };
 }
 
 /** Fake a logbook-progress bar width (0-100) based on status */
 function attendanceWidth(u: User): number {
   if (u.certificate) return 100;
-  if (u.applications?.some(a => a.status === "approved")) return Math.floor(40 + (u.id.charCodeAt(0) % 50));
+  if (u.applications?.some(a => a.status === "ACCEPTED") && u.assignedMentor) {
+    return Math.floor(40 + (u.id.charCodeAt(0) % 50));
+  }
   return 0;
 }
 
@@ -201,8 +204,8 @@ export function UserList({
               const status     = getStatus(user);
               const pct        = attendanceWidth(user);
               const mentor     = assignedMentors[user.id] !== undefined ? assignedMentors[user.id] : user.assignedMentor ?? null;
-              const hasApprApp = user.applications?.some(a => a.status === "approved");
-              const canAssign  = user.approvalStatus === "APPROVED" && hasApprApp && mentors.length > 0;
+              const hasAccApp  = user.applications?.some(a => a.status === "ACCEPTED");
+              const canAssign  = user.approvalStatus === "APPROVED" && hasAccApp && mentors.length > 0;
               const isEditing  = edit?.internId === user.id;
               const isAssigning = assigningId === user.id;
               const isDeleting  = deletingId  === user.id;
