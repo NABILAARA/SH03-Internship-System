@@ -47,6 +47,7 @@ type Application = {
   userId: string;
   programId: string;
   status: string;
+  position: string | null;
   cvUrl: string | null;
   notes: string | null;
   createdAt: Date;
@@ -161,11 +162,12 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
 
   const handleExport = () => {
     const rows = [
-      ["Nama", "Email", "Program", "Batch", "Tanggal Daftar", "Status"],
+      ["Nama", "Email", "Program", "Posisi", "Batch", "Tanggal Daftar", "Status"],
       ...filteredApps.map(a => [
         a.user.name ?? "-",
         a.user.email,
         a.program.title,
+        a.position ?? "-",
         a.program.period ?? "-",
         new Date(a.createdAt).toLocaleDateString("id-ID"),
         a.status,
@@ -332,11 +334,12 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/60">
-                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 w-[28%]">Applicant</th>
-                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[22%]">Program</th>
-                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[10%]">Period</th>
-                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[14%]">Applied Date</th>
-                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[12%]">Status</th>
+                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 w-[22%]">Applicant</th>
+                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[18%]">Program</th>
+                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[16%]">Posisi</th>
+                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[9%]">Period</th>
+                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[11%]">Applied Date</th>
+                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[10%]">Status</th>
                   <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[14%]">Action</th>
                 </tr>
               </thead>
@@ -363,6 +366,17 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                       {/* Program */}
                       <td className="px-4 py-3.5">
                         <p className="text-sm text-slate-700 font-medium leading-snug">{app.program.title}</p>
+                      </td>
+
+                      {/* Posisi */}
+                      <td className="px-4 py-3.5">
+                        {app.position ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                            {app.position}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-300">—</span>
+                        )}
                       </td>
 
                       {/* Period */}
@@ -536,12 +550,13 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
 
               {/* Aplikasi info */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  ["Program",       detailApp.program.title],
-                  ["Period",        detailApp.program.period ?? "—"],
+                {([
+                  ["Program",        detailApp.program.title],
+                  ["Posisi Dilamar", detailApp.position ?? "—"],
+                  ["Period",         detailApp.program.period ?? "—"],
                   ["Tanggal Daftar", new Date(detailApp.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })],
-                ].map(([label, val]) => (
-                  <div key={String(label)} className="bg-slate-50 rounded-xl p-3">
+                ] as [string, string][]).map(([label, val]) => (
+                  <div key={label} className="bg-slate-50 rounded-xl p-3">
                     <p className="text-xs text-slate-400 mb-0.5">{label}</p>
                     <p className="text-sm font-semibold text-slate-700">{val}</p>
                   </div>
