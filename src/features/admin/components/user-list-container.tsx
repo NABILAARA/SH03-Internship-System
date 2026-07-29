@@ -99,6 +99,7 @@ const INTERNSHIP_POSITIONS = [
   "DevOps Engineer",
   "AI/LM Engineer",
   "Academic Publishing Intern",
+  "Branding and Graphic Designer",
 ] as const;
 
 const AVATAR_COLORS = [
