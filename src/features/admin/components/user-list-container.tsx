@@ -89,8 +89,8 @@ const PAGE_SIZE = 8;
 
 const INTERNSHIP_POSITIONS = [
   "UI/UX Designer",
-  "Frontend Web Developer",
-  "Backend Engineer",
+  "Frontend Developer",
+  "Backend Developer",
   "QA/Software Tester & Documentation",
   "Repository E-Prints",
   "Social Media Specialist",
