@@ -110,6 +110,48 @@ export async function getUsersByRole(role: UserRole) {
   }
 }
 
+export async function addMentorByAdminAction(data: {
+  name: string;
+  email: string;
+  password: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id || session.user.role !== "ADMIN") {
+      return { error: "Unauthorized" };
+    }
+
+    if (!data.name.trim())        return { error: "Nama wajib diisi." };
+    if (!data.email.trim())       return { error: "Email wajib diisi." };
+    if (!data.password.trim())    return { error: "Password wajib diisi." };
+    if (data.password.length < 6) return { error: "Password minimal 6 karakter." };
+
+    const existing = await prisma.user.findUnique({
+      where: { email: data.email.trim().toLowerCase() },
+    });
+    if (existing) return { error: "Email sudah terdaftar." };
+
+    await prisma.user.create({
+      data: {
+        name: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: hashPassword(data.password),
+        role: "MENTOR",
+        approvalStatus: "APPROVED",
+        approvedAt: new Date(),
+        approvedBy: session.user.id,
+      },
+    });
+
+    revalidatePath("/admin/mentors");
+    revalidatePath("/admin/interns");
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding mentor by admin:", error);
+    return { error: "Gagal mendaftarkan mentor." };
+  }
+}
+
 export async function addInternByAdminAction(data: {
   name: string;
   email: string;
