@@ -189,9 +189,9 @@ export function UserList({
             <tr className="border-b border-slate-100 bg-slate-50/60">
               <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-5 py-3 w-[26%]">Intern</th>
               <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[18%]">Program</th>
+              <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">Google Drive</th>
               <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[14%]">Mentor</th>
               <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[12%]">Status</th>
-              <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">Google Drive</th>
               <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[16%]">Attendance</th>
               <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[14%]">Action</th>
             </tr>
