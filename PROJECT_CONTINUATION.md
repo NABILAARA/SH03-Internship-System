@@ -250,7 +250,7 @@ Model di schema (belum dipakai aktif, tabel kosong):
 - `src/features/auth/schemas/auth.schema.ts` — role enum hanya MENTOR & INTERN.
 - `prisma/seed.ts` — guard proteksi data real sebelum deleteMany.
 - `src/features/internship-programs/services/application.actions.ts` — field position di applyForProgramAction & resubmitApplicationAction.
-- `src/features/internship-programs/components/intern-registration.tsx` — dropdown 11 posisi + info sesi seleksi.
+- `src/features/internship-programs/components/intern-registration.tsx` — dropdown 12 posisi + info sesi seleksi.
 - `src/features/profile/components/profile-form.tsx` — completeness 21 field dengan 3 sub-bar.
 - `src/features/admin/components/user-list-container.tsx` — detail profil lengkap, tanggal mulai/selesai dari application & certificate.
 - `src/features/admin/components/user-list.tsx` — logika status Upcoming/On Going/Completed.
@@ -282,8 +282,20 @@ Seed akan diblokir otomatis oleh guard, tapi tetap harus berhati-hati.
 - Proteksi IDOR di `evaluation.actions.ts` — verifikasi mentor hanya bisa nilai intern yang di-assign ke dia.
 - `getPublishedAnnouncements()` — ambil role dari session, bukan dari parameter client.
 - Supabase Storage untuk upload foto profil dan CV.
-- CI/CD GitHub Actions untuk type check otomatis sebelum merge ke main.
-- 2 database terpisah (development & production) untuk isolasi data.
+
 
 **Last Updated:** 2026-07-29
-**Session Status:** bcrypt migration, seed protection, position dropdown, intern selection info, profile completeness 21 fields, admin add intern/mentor, intern start/end dates, cert sequence fix — semua implemented dan verified.
+**Session Status:** bcrypt migration, seed protection, position dropdown, intern selection info, profile completeness 21 fields, admin add intern/mentor, intern start/end dates, cert sequence fix — semua implemented dan verified, penyesuaian header table interns page pada admin.
+
+---
+
+## Session Update — 2026-07-29 (Lanjutan)
+
+### Perubahan Tambahan
+
+#### 13. Urutan Kolom Tabel Interns — Diperbarui
+- Header tabel di `/admin/interns` diubah urutannya menjadi:
+  **Intern → Program → Google Drive → Mentor → Status → Attendance → Action**
+- File: `src/features/admin/components/user-list.tsx`
+
+**Last Updated:** 2026-07-29 (lanjutan)
