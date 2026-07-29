@@ -669,8 +669,12 @@ export function UserListContainer({
                     ["Dokumen",    detailUser.documentStatus],
                     ["Mentor",     detailUser.assignedMentor?.name],
                     ["Sertifikat", detailUser.certificate?.certNumber],
-                    ["Mulai",      detailUser.internshipStartDate ? new Date(detailUser.internshipStartDate).toLocaleDateString("id-ID") : null],
-                    ["Selesai",    detailUser.internshipEndDate ? new Date(detailUser.internshipEndDate).toLocaleDateString("id-ID") : null],
+                    ["Mulai",      detailUser.applications?.[0]?.createdAt
+                                    ? new Date(detailUser.applications[0].createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+                                    : null],
+                    ["Selesai",    detailUser.certificate?.issuedAt
+                                    ? new Date(detailUser.certificate.issuedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+                                    : null],
                   ] as [string, string | null | undefined][]).map(([label, val]) => (
                     <div key={label}>
                       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>

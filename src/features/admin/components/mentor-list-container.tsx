@@ -5,7 +5,7 @@ import {
   Search, Plus, X, Users2, Star, BookOpen,
   Trash2, Loader2, Mail, Briefcase, UserCheck,
 } from "lucide-react";
-import { getUsersByRole, deleteUser } from "../services/user-management.actions";
+import { getUsersByRole, deleteUser, addMentorByAdminAction } from "../services/user-management.actions";
 import { Button } from "@/components/ui/button";
 
 /* ─── Types ────────────────────────────────────────────── */
@@ -63,9 +63,9 @@ export function MentorListContainer({
 
   // Add Mentor modal state
   const [addName, setAddName] = useState("");
-  const [addTitle, setAddTitle] = useState("");
   const [addEmail, setAddEmail] = useState("");
-  const [addProgram, setAddProgram] = useState("");
+  const [addPassword, setAddPassword] = useState("");
+  const [addSuccess, setAddSuccess] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [addLoading, setAddLoading] = useState(false);
 
@@ -109,13 +109,17 @@ export function MentorListContainer({
 
   const handleAddMentor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addName || !addEmail) { setAddError("Nama dan email wajib diisi."); return; }
     setAddLoading(true);
     setAddError(null);
     try {
-      // Placeholder — real implementation would call a server action
-      setShowAddModal(false);
-      setAddName(""); setAddTitle(""); setAddEmail(""); setAddProgram("");
+      const res = await addMentorByAdminAction({ name: addName, email: addEmail, password: addPassword });
+      if (res.error) {
+        setAddError(res.error);
+      } else {
+        setAddSuccess(true);
+        getUsersByRole("MENTOR").then(r => { if (r.data) setMentors(r.data as Mentor[]); });
+        setTimeout(() => closeAdd(), 1800);
+      }
     } catch {
       setAddError("Gagal menambahkan mentor.");
     } finally {
@@ -125,7 +129,8 @@ export function MentorListContainer({
 
   const closeAdd = () => {
     setShowAddModal(false);
-    setAddName(""); setAddTitle(""); setAddEmail(""); setAddProgram(""); setAddError(null);
+    setAddName(""); setAddEmail(""); setAddPassword("");
+    setAddError(null); setAddSuccess(false);
   };
 
   return (
@@ -296,78 +301,62 @@ export function MentorListContainer({
       {/* ── Add Mentor Modal ── */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">Add Mentor</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Tambahkan mentor baru ke sistem</p>
+                <h3 className="font-bold text-slate-800 text-base">Tambah Mentor Baru</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Akun langsung aktif dan siap di-assign ke intern</p>
               </div>
               <button onClick={closeAdd} className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddMentor} className="p-6 space-y-4">
-              {addError && (
-                <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5 text-xs text-red-700">{addError}</div>
+            <div className="px-6 py-5">
+              {addSuccess ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+                    <UserCheck className="h-7 w-7 text-emerald-600" />
+                  </div>
+                  <p className="font-bold text-slate-800">Mentor berhasil ditambahkan!</p>
+                  <p className="text-sm text-slate-500">Akun sudah <span className="font-semibold text-emerald-600">aktif</span> dan siap di-assign ke intern.</p>
+                </div>
+              ) : (
+                <form id="add-mentor-form" onSubmit={handleAddMentor} className="space-y-4">
+                  {addError && (
+                    <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5 text-xs text-red-700">{addError}</div>
+                  )}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Nama Lengkap <span className="text-red-500">*</span></label>
+                    <input type="text" placeholder="Contoh: Budi Santoso" value={addName}
+                      onChange={e => setAddName(e.target.value)} required
+                      className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Email <span className="text-red-500">*</span></label>
+                    <input type="email" placeholder="name@gmail.com" value={addEmail}
+                      onChange={e => setAddEmail(e.target.value)} required
+                      className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Password <span className="text-red-500">*</span></label>
+                    <input type="password" placeholder="Min. 6 karakter" value={addPassword}
+                      onChange={e => setAddPassword(e.target.value)} required
+                      className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                    <p className="text-[10px] text-slate-400">Mentor dapat mengganti password sendiri di halaman profil.</p>
+                  </div>
+                </form>
               )}
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Full Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Budi Santoso"
-                  value={addName}
-                  onChange={e => setAddName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Role / Title</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Senior Frontend Engineer"
-                  value={addTitle}
-                  onChange={e => setAddTitle(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Email</label>
-                <input
-                  type="email"
-                  placeholder="name@lexa.id"
-                  value={addEmail}
-                  onChange={e => setAddEmail(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Assigned Program</label>
-                <select
-                  value={addProgram}
-                  onChange={e => setAddProgram(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                >
-                  <option value="">Pilih program...</option>
-                  {programs.map(p => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <Button type="button" variant="outline" onClick={closeAdd} className="text-slate-600 border-slate-200">
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={addLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  {addLoading ? "Menyimpan..." : "Save Mentor"}
+            {!addSuccess && (
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100">
+                <Button type="button" variant="outline" onClick={closeAdd} className="text-slate-600 border-slate-200">Batal</Button>
+                <Button type="submit" form="add-mentor-form" disabled={addLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  {addLoading ? "Menyimpan..." : "Tambahkan Mentor"}
                 </Button>
               </div>
-            </form>
+            )}
           </div>
         </div>
       )}
