@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { UserRole } from "@/types/roles";
+import { hashPassword } from "@/utils/hash";
 
 export async function getUsersByRole(role: UserRole) {
   try {
@@ -106,6 +107,88 @@ export async function getUsersByRole(role: UserRole) {
   } catch (error: unknown) {
     console.error(`Error fetching ${role} users:`, error);
     return { error: `Gagal mengambil data ${role}` };
+  }
+}
+
+export async function addInternByAdminAction(data: {
+  name: string;
+  email: string;
+  password: string;
+  programId: string;
+  position: string;
+  mentorId?: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id || session.user.role !== "ADMIN") {
+      return { error: "Unauthorized" };
+    }
+
+    // Validasi input
+    if (!data.name.trim())     return { error: "Nama wajib diisi." };
+    if (!data.email.trim())    return { error: "Email wajib diisi." };
+    if (!data.password.trim()) return { error: "Password wajib diisi." };
+    if (data.password.length < 6) return { error: "Password minimal 6 karakter." };
+    if (!data.programId)       return { error: "Program wajib dipilih." };
+    if (!data.position)        return { error: "Posisi wajib dipilih." };
+
+    // Cek email tidak duplikat
+    const existing = await prisma.user.findUnique({ where: { email: data.email.trim().toLowerCase() } });
+    if (existing) return { error: "Email sudah terdaftar." };
+
+    // Cek program ada
+    const program = await prisma.internshipProgram.findUnique({ where: { id: data.programId } });
+    if (!program) return { error: "Program tidak ditemukan." };
+
+    const hashed = hashPassword(data.password);
+
+    // Buat user intern langsung APPROVED
+    const intern = await prisma.user.create({
+      data: {
+        name: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: hashed,
+        role: "INTERN",
+        approvalStatus: "APPROVED",
+        approvedAt: new Date(),
+        approvedBy: session.user.id,
+        internshipPosition: data.position,
+      },
+    });
+
+    // Buat application langsung ACCEPTED (On Going)
+    await prisma.application.create({
+      data: {
+        userId: intern.id,
+        programId: data.programId,
+        position: data.position,
+        status: "ACCEPTED",
+        notes: "Didaftarkan langsung oleh admin.",
+      },
+    });
+
+    // Assign mentor jika dipilih — kalau tidak, auto-assign mentor pertama
+    const mentorId = data.mentorId || (
+      await prisma.user.findFirst({
+        where: { role: "MENTOR", approvalStatus: "APPROVED" },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      })
+    )?.id;
+
+    if (mentorId) {
+      await prisma.mentorIntern.create({
+        data: { internId: intern.id, mentorId },
+      });
+    }
+
+    revalidatePath("/admin/interns");
+    revalidatePath("/admin/applicants");
+    revalidatePath("/admin/dashboard");
+    return { success: true, internId: intern.id };
+  } catch (error) {
+    console.error("Error adding intern by admin:", error);
+    return { error: "Gagal mendaftarkan intern." };
   }
 }
 

@@ -5,7 +5,7 @@ import {
   Users, Search, Plus, X, ChevronLeft, ChevronRight,
   Users2, CheckCircle2, Clock4, Award,
 } from "lucide-react";
-import { getUsersByRole } from "../services/user-management.actions";
+import { getUsersByRole, addInternByAdminAction } from "../services/user-management.actions";
 import { UserList } from "./user-list";
 import { Button } from "@/components/ui/button";
 import { UserRole } from "@/types/roles";
@@ -87,6 +87,20 @@ interface UserListContainerProps {
 
 const PAGE_SIZE = 8;
 
+const INTERNSHIP_POSITIONS = [
+  "UI/UX Designer",
+  "Frontend Web Developer",
+  "Backend Engineer",
+  "QA/Software Tester & Documentation",
+  "Repository E-Prints",
+  "Social Media Specialist",
+  "Corporate Identity Designer",
+  "AI & Security Engineer",
+  "DevOps Engineer",
+  "AI/LM Engineer",
+  "Academic Publishing Intern",
+] as const;
+
 const AVATAR_COLORS = [
   "bg-blue-500", "bg-violet-500", "bg-emerald-500",
   "bg-orange-500", "bg-pink-500", "bg-teal-500",
@@ -122,8 +136,11 @@ export function UserListContainer({
   const [showAddModal, setShowAddModal] = useState(false);
   const [addName, setAddName] = useState("");
   const [addEmail, setAddEmail] = useState("");
+  const [addPassword, setAddPassword] = useState("");
   const [addProgram, setAddProgram] = useState("");
+  const [addPosition, setAddPosition] = useState("");
   const [addMentor, setAddMentor] = useState("");
+  const [addSuccess, setAddSuccess] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [addLoading, setAddLoading] = useState(false);
 
@@ -200,13 +217,27 @@ export function UserListContainer({
 
   const handleAddIntern = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addName || !addEmail) { setAddError("Nama dan email wajib diisi."); return; }
     setAddLoading(true);
     setAddError(null);
     try {
-      setAddError("Fitur tambah intern langsung belum tersedia. Intern dapat mendaftar sendiri melalui halaman registrasi.");
+      const res = await addInternByAdminAction({
+        name: addName,
+        email: addEmail,
+        password: addPassword,
+        programId: addProgram,
+        position: addPosition,
+        mentorId: addMentor || undefined,
+      });
+      if (res.error) {
+        setAddError(res.error);
+      } else {
+        setAddSuccess(true);
+        // Refresh data
+        getUsersByRole(role).then(r => { if (r.data) setUsers(r.data as User[]); });
+        setTimeout(() => closeAdd(), 1800);
+      }
     } catch {
-      setAddError("Gagal menambahkan intern.");
+      setAddError("Gagal mendaftarkan intern.");
     } finally {
       setAddLoading(false);
     }
@@ -214,7 +245,9 @@ export function UserListContainer({
 
   const closeAdd = () => {
     setShowAddModal(false);
-    setAddName(""); setAddEmail(""); setAddProgram(""); setAddMentor(""); setAddError(null);
+    setAddName(""); setAddEmail(""); setAddPassword("");
+    setAddProgram(""); setAddPosition(""); setAddMentor("");
+    setAddError(null); setAddSuccess(false);
   };
 
   return (
@@ -402,97 +435,111 @@ export function UserListContainer({
       {/* ── Add Intern Modal ── */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
               <div>
-                <h3 className="font-bold text-slate-800 text-base">Add New Intern</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Daftarkan intern baru ke salah satu program magang</p>
+                <h3 className="font-bold text-slate-800 text-base">Tambah Intern Baru</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Intern langsung terdaftar dan berstatus On Going</p>
               </div>
               <button onClick={closeAdd} className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddIntern} className="p-6 space-y-4">
-              {addError && (
-                <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5 text-xs text-red-700">{addError}</div>
+            {/* Body */}
+            <div className="overflow-y-auto flex-1 px-6 py-5">
+              {addSuccess ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+                    <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+                  </div>
+                  <p className="font-bold text-slate-800">Intern berhasil didaftarkan!</p>
+                  <p className="text-sm text-slate-500">Status langsung <span className="font-semibold text-emerald-600">On Going</span>.</p>
+                </div>
+              ) : (
+                <form id="add-intern-form" onSubmit={handleAddIntern} className="space-y-4">
+                  {addError && (
+                    <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5 text-xs text-red-700">{addError}</div>
+                  )}
+
+                  {/* Nama */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Nama Lengkap <span className="text-red-500">*</span></label>
+                    <input type="text" placeholder="Contoh: Rizky Pratama" value={addName}
+                      onChange={e => setAddName(e.target.value)} required
+                      className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Email <span className="text-red-500">*</span></label>
+                    <input type="email" placeholder="name@gmail.com" value={addEmail}
+                      onChange={e => setAddEmail(e.target.value)} required
+                      className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Password <span className="text-red-500">*</span></label>
+                    <input type="password" placeholder="Min. 6 karakter" value={addPassword}
+                      onChange={e => setAddPassword(e.target.value)} required
+                      className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                    <p className="text-[10px] text-slate-400">Intern dapat mengganti password sendiri di halaman profil.</p>
+                  </div>
+
+                  {/* Program */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Program Magang <span className="text-red-500">*</span></label>
+                    <select value={addProgram} onChange={e => setAddProgram(e.target.value)} required
+                      className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition">
+                      <option value="">Pilih program...</option>
+                      {programs.map(p => (
+                        <option key={p.id} value={p.id}>{p.title} {p.period ? `(${p.period})` : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Posisi */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Posisi yang Dilamar <span className="text-red-500">*</span></label>
+                    <select value={addPosition} onChange={e => setAddPosition(e.target.value)} required
+                      className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition">
+                      <option value="">Pilih posisi...</option>
+                      {INTERNSHIP_POSITIONS.map(pos => (
+                        <option key={pos} value={pos}>{pos}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Mentor */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Assign Mentor</label>
+                    <select value={addMentor} onChange={e => setAddMentor(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition">
+                      <option value="">Auto-assign mentor tersedia</option>
+                      {mentors.map(m => (
+                        <option key={m.id} value={m.id}>{m.name ?? m.email}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-slate-400">Kosongkan untuk auto-assign mentor pertama yang tersedia.</p>
+                  </div>
+                </form>
               )}
+            </div>
 
-              {/* Full Name */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Full Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Rizky Pratama"
-                  value={addName}
-                  onChange={e => setAddName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                />
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Email</label>
-                <input
-                  type="email"
-                  placeholder="name@gmail.com"
-                  value={addEmail}
-                  onChange={e => setAddEmail(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                />
-              </div>
-
-              {/* Program */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Program</label>
-                <select
-                  value={addProgram}
-                  onChange={e => setAddProgram(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                >
-                  <option value="">Pilih program...</option>
-                  {programs.map(p => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Batch (period) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Batch / Period</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Batch 4 / July - Dec 2026"
-                  className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                  readOnly
-                  value={programs.find(p => p.id === addProgram)?.period ?? ""}
-                />
-              </div>
-
-              {/* Mentor */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Mentor</label>
-                <select
-                  value={addMentor}
-                  onChange={e => setAddMentor(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                >
-                  <option value="">Pilih mentor (opsional)...</option>
-                  {mentors.map(m => (
-                    <option key={m.id} value={m.id}>{m.name ?? m.email}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            {/* Footer */}
+            {!addSuccess && (
+              <div className="shrink-0 flex justify-end gap-2 px-6 py-4 border-t border-slate-100">
                 <Button type="button" variant="outline" onClick={closeAdd} className="text-slate-600 border-slate-200">
-                  Cancel
+                  Batal
                 </Button>
-                <Button type="submit" disabled={addLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  {addLoading ? "Menyimpan..." : "Save Intern"}
+                <Button type="submit" form="add-intern-form" disabled={addLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  {addLoading ? "Menyimpan..." : "Daftarkan Intern"}
                 </Button>
               </div>
-            </form>
+            )}
           </div>
         </div>
       )}
