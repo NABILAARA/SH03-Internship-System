@@ -120,6 +120,7 @@ export function MentorLogbookReview({ initialLogbooks }: Readonly<MentorLogbookR
             placeholder="Search by intern name or activity detail..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
+            maxLength={100}
             className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
           />
         </div>

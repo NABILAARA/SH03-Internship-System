@@ -199,6 +199,7 @@ export function MentorListContainer({
                 placeholder="Cari nama atau email..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
+                maxLength={100}
                 className="rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition w-48"
               />
               {searchQuery && (
