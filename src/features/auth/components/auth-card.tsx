@@ -6,8 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, registerSchema } from "../schemas/auth.schema";
-import { registerAction } from "../services/auth.actions";
-import { signIn } from "next-auth/react";
+import { loginAction, registerAction } from "../services/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Loader2, KeyRound, Mail, User as UserIcon, UserCheck, ShieldAlert } from "lucide-react";
 
@@ -42,19 +41,17 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
 
     try {
       if (isLogin) {
-        const result = await signIn("credentials", {
+        const result = await loginAction({
           email: data.email,
           password: data.password,
-          redirect: false
         });
 
         if (result?.error) {
-          setError("Email atau password yang Anda masukkan salah.");
+          setError(result.error);
           setIsLoading(false);
         } else {
-          // Redirect ke halaman khusus yang membaca session di server dan redirect sesuai role
-          // Ini menghindari getSession() round-trip tambahan dari client
-          router.push("/dashboard-redirect");
+          // Full reload agar cookie session yang baru di-set server langsung terbaca
+          window.location.href = "/dashboard-redirect";
         }
       } else {
         const response = await registerAction(data);
@@ -72,7 +69,7 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
       }
     } catch (err) {
       console.error(err);
-      setError("Terjadi kesalahan yang tidak terduga.");
+      setError("Terlalu banyak percobaan. Coba lagi beberapa menit lagi.");
       setIsLoading(false);
     }
   };
