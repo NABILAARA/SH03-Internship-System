@@ -31,11 +31,10 @@ export default async function InternDashboardPage() {
 
   // All queries in parallel
   const [
-    _totalLogs, approvedLogs, allProgressLogs,
+    approvedLogs, allProgressLogs,
     application, hasCertificate,
     recentLogs, mentorAssignment, weeklyLogs,
   ] = await Promise.all([
-    userId ? prisma.logbook.count({ where: { userId } }) : Promise.resolve(0),
     userId ? prisma.logbook.count({ where: { userId, status: "approved" } }) : Promise.resolve(0),
     userId ? prisma.logbook.findMany({ where: { userId }, select: { progress: true } }) : Promise.resolve([]),
     userId ? prisma.application.findFirst({
