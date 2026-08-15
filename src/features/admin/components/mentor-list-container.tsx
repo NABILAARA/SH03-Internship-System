@@ -22,14 +22,9 @@ interface Mentor {
   certificate?: { certNumber: string; issuedAt: Date } | null;
 }
 
-interface Program {
-  id: string;
-  title: string;
-}
 
 interface MentorListContainerProps {
   initialData: Mentor[];
-  programs?: Program[];
 }
 
 /* ─── Helpers ───────────────────────────────────────────── */
@@ -53,7 +48,6 @@ function initials(name: string | null) {
 /* ─── Main Component ───────────────────────────────────── */
 export function MentorListContainer({
   initialData,
-  programs = [],
 }: Readonly<MentorListContainerProps>) {
   const [mentors, setMentors] = useState<Mentor[]>(initialData);
   const [searchQuery, setSearchQuery] = useState("");
