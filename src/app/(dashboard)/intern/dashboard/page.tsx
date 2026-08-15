@@ -31,7 +31,7 @@ export default async function InternDashboardPage() {
 
   // All queries in parallel
   const [
-    totalLogs, approvedLogs, allProgressLogs,
+    _totalLogs, approvedLogs, allProgressLogs,
     application, hasCertificate,
     recentLogs, mentorAssignment, weeklyLogs,
   ] = await Promise.all([
