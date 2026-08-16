@@ -14,7 +14,6 @@ type User = {
   id: string;
   name: string | null;
   email: string;
-  // Informasi Pribadi
   nickname?: string | null;
   phone?: string | null;
   gender?: string | null;
@@ -23,7 +22,6 @@ type User = {
   address?: string | null;
   city?: string | null;
   province?: string | null;
-  // Pendidikan
   institution?: string | null;
   faculty?: string | null;
   studyProgram?: string | null;
@@ -31,7 +29,6 @@ type User = {
   semester?: number | null;
   entryYear?: number | null;
   graduationYear?: number | null;
-  // Skill & Portfolio
   portfolioUrl?: string | null;
   linkedinUrl?: string | null;
   githubUsername?: string | null;
@@ -78,7 +75,9 @@ function getInitials(name: string | null) {
 }
 
 const PAGE_SIZE = 8;
-const normalizedStatus = (status: string) => ({ PENDING: "pending", IN_REVIEW: "review", INTERVIEW: "review", ACCEPTED: "approved", REJECTED: "rejected", WITHDRAWN: "rejected" }[status] ?? status);
+const normalizedStatus = (status: string) => (
+  { PENDING: "pending", IN_REVIEW: "review", INTERVIEW: "review", ACCEPTED: "approved", REJECTED: "rejected", WITHDRAWN: "rejected" }[status] ?? status
+);
 
 export function ApplicantManager({ initialApplications }: Readonly<ApplicantManagerProps>) {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
@@ -87,22 +86,27 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Detail / reject modal state
   const [detailApp, setDetailApp] = useState<Application | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectNotes, setRejectNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectionApp, setSelectionApp] = useState<Application | null>(null);
-  const [selectionForm, setSelectionForm] = useState({ title: "", type: "INTERVIEW", scheduledAt: "", method: "ONLINE", location: "", meetingLink: "", interviewerName: "", notes: "" });
+  const [selectionForm, setSelectionForm] = useState({
+    title: "", type: "INTERVIEW", scheduledAt: "", method: "ONLINE",
+    location: "", meetingLink: "", interviewerName: "", notes: ""
+  });
 
-  // Counts for stat cards & filter tabs
+  // Counts for filter tabs
   const counts = useMemo(() => ({
+    all: applications.length,
     pending:  applications.filter(a => normalizedStatus(a.status) === "pending").length,
     review:   applications.filter(a => normalizedStatus(a.status) === "review").length,
     approved: applications.filter(a => normalizedStatus(a.status) === "approved").length,
     rejected: applications.filter(a => normalizedStatus(a.status) === "rejected").length,
-    get all() { return this.pending + this.approved + this.rejected; },
   }), [applications]);
+
+  // Total stat card = pending + approved + rejected (exclude in-review/interview)
+  const totalStatCount = counts.pending + counts.approved + counts.rejected;
 
   const filteredApps = useMemo(() => {
     let list = applications.filter(app => {
@@ -129,7 +133,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
     setCurrentPage(p);
   };
 
-  // Reset to page 1 when filter/search changes
   const setFilter = (s: string) => { setFilterStatus(s); setCurrentPage(1); };
   const setSearch = (s: string) => { setSearchQuery(s); setCurrentPage(1); };
 
@@ -154,9 +157,42 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
   };
 
   const handleCreateSelection = async (event: React.FormEvent) => {
-    event.preventDefault(); if (!selectionApp) return; setIsSubmitting(true);
-    const result = await createSelectionSessionAction({ applicationId: selectionApp.id, ...selectionForm, type: selectionForm.type as "INTERVIEW", method: selectionForm.method as "ONLINE" | "OFFLINE" });
-    if (result.error) alert(result.error); else { setApplications(current => current.map(app => app.id === selectionApp.id ? { ...app, status: selectionForm.type.includes("INTERVIEW") ? "INTERVIEW" : "IN_REVIEW", selectionSessions: [...(app.selectionSessions ?? []), { id: crypto.randomUUID(), title: selectionForm.title, type: selectionForm.type, scheduledAt: new Date(selectionForm.scheduledAt), method: selectionForm.method, status: "SCHEDULED", score: null, resultNotes: null, notes: selectionForm.notes }] } : app)); setSelectionApp(null); }
+    event.preventDefault();
+    if (!selectionApp) return;
+    setIsSubmitting(true);
+    const result = await createSelectionSessionAction({
+      applicationId: selectionApp.id,
+      ...selectionForm,
+      type: selectionForm.type as "INTERVIEW",
+      method: selectionForm.method as "ONLINE" | "OFFLINE"
+    });
+    if (result.error) {
+      alert(result.error);
+    } else {
+      setApplications(current => current.map(app =>
+        app.id === selectionApp.id
+          ? {
+              ...app,
+              status: selectionForm.type.includes("INTERVIEW") ? "INTERVIEW" : "IN_REVIEW",
+              selectionSessions: [
+                ...(app.selectionSessions ?? []),
+                {
+                  id: crypto.randomUUID(),
+                  title: selectionForm.title,
+                  type: selectionForm.type,
+                  scheduledAt: new Date(selectionForm.scheduledAt),
+                  method: selectionForm.method,
+                  status: "SCHEDULED",
+                  score: null,
+                  resultNotes: null,
+                  notes: selectionForm.notes
+                }
+              ]
+            }
+          : app
+      ));
+      setSelectionApp(null);
+    }
     setIsSubmitting(false);
   };
 
@@ -181,7 +217,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
     URL.revokeObjectURL(url);
   };
 
-  // Stat card helper
   const StatCard = ({
     icon, label, value, sub, iconBg
   }: { icon: React.ReactNode; label: string; value: number; sub: string; iconBg: string }) => (
@@ -219,8 +254,8 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
           icon={<ClipboardList className="h-5 w-5 text-blue-600" />}
           iconBg="bg-blue-50"
           label="Total Applications"
-          value={counts.all}
-          sub="All registered applicants"
+          value={totalStatCount}
+          sub="Pending + Accepted + Rejected"
         />
         <StatCard
           icon={<Clock className="h-5 w-5 text-amber-500" />}
@@ -234,7 +269,7 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
           iconBg="bg-emerald-50"
           label="Accepted"
           value={counts.approved}
-          sub={counts.all > 0 ? `${Math.round((counts.approved / counts.all) * 100)}% acceptance rate` : "acceptance rate"}
+          sub={totalStatCount > 0 ? `${Math.round((counts.approved / totalStatCount) * 100)}% acceptance rate` : "acceptance rate"}
         />
         <StatCard
           icon={<XCircle className="h-5 w-5 text-red-400" />}
@@ -247,7 +282,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
 
       {/* Table Card */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        {/* Table Header */}
         <div className="p-5 border-b border-slate-100">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
@@ -264,7 +298,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
             </Button>
           </div>
 
-          {/* Filter Tabs + Sort + Search */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-1">
               {filterTabs.map(tab => (
@@ -286,7 +319,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                 </button>
               ))}
 
-              {/* Sort & Search — pushed right */}
               <div className="flex items-center gap-2 ml-auto">
                 <div className="relative hidden sm:block">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
@@ -309,7 +341,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
               </div>
             </div>
 
-            {/* Mobile search */}
             <div className="relative sm:hidden">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
               <input
@@ -323,7 +354,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
           </div>
         </div>
 
-        {/* Table */}
         {paginated.length === 0 ? (
           <div className="py-16 text-center">
             <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
@@ -350,7 +380,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   const avatarColor = getAvatarColor(name);
                   return (
                     <tr key={app.id} className="hover:bg-slate-50/50 transition group">
-                      {/* Applicant */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white text-xs font-bold ${avatarColor}`}>
@@ -362,13 +391,9 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                           </div>
                         </div>
                       </td>
-
-                      {/* Program */}
                       <td className="px-4 py-3.5">
                         <p className="text-sm text-slate-700 font-medium leading-snug">{app.program.title}</p>
                       </td>
-
-                      {/* Posisi */}
                       <td className="px-4 py-3.5">
                         {app.position ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
@@ -378,15 +403,9 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                           <span className="text-xs text-slate-300">—</span>
                         )}
                       </td>
-
-                      {/* Period */}
                       <td className="px-4 py-3.5">
-                        <span className="text-xs text-slate-500 font-medium">
-                          {app.program.period ?? "—"}
-                        </span>
+                        <span className="text-xs text-slate-500 font-medium">{app.program.period ?? "—"}</span>
                       </td>
-
-                      {/* Applied Date */}
                       <td className="px-4 py-3.5">
                         <p className="text-xs text-slate-600">
                           {new Date(app.createdAt).toLocaleDateString("id-ID", {
@@ -394,29 +413,21 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                           })}
                         </p>
                       </td>
-
-                      {/* Status badge */}
                       <td className="px-4 py-3.5">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          normalizedStatus(app.status) === "approved"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : normalizedStatus(app.status) === "rejected"
-                            ? "bg-red-100 text-red-600"
-                            : normalizedStatus(app.status) === "review"
-                            ? "bg-blue-100 text-blue-600"
+                          normalizedStatus(app.status) === "approved" ? "bg-emerald-100 text-emerald-700"
+                            : normalizedStatus(app.status) === "rejected" ? "bg-red-100 text-red-600"
+                            : normalizedStatus(app.status) === "review"  ? "bg-blue-100 text-blue-600"
                             : "bg-amber-100 text-amber-600"
                         }`}>
                           {normalizedStatus(app.status) === "approved" ? "Accepted"
                             : normalizedStatus(app.status) === "rejected" ? "Rejected"
-                            : normalizedStatus(app.status) === "review" ? "In Selection"
+                            : normalizedStatus(app.status) === "review"  ? "In Selection"
                             : "Pending"}
                         </span>
                       </td>
-
-                      {/* Actions */}
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          {/* Eye — detail */}
                           <button
                             onClick={() => setDetailApp(app)}
                             className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
@@ -424,21 +435,23 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </button>
-
-                          {/* Check — approve (only if not approved) */}
                           {app.status !== "ACCEPTED" && app.status !== "approved" && (
                             <button
                               disabled={isSubmitting}
-                              onClick={() => { if (confirm("Terima applicant ini sebagai Intern? Akun yang sama akan diaktifkan untuk akses intern.")) handleReview(app.id, "approved"); }}
+                              onClick={() => { if (confirm("Terima applicant ini sebagai Intern?")) handleReview(app.id, "approved"); }}
                               className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition disabled:opacity-40"
                               title="Terima"
                             >
                               <Check className="h-3.5 w-3.5" />
                             </button>
                           )}
-                          <button onClick={() => { setSelectionApp(app); setSelectionForm({ title: "", type: "INTERVIEW", scheduledAt: "", method: "ONLINE", location: "", meetingLink: "", interviewerName: "", notes: "" }); }} className="text-xs text-blue-600 hover:underline" title="Tambah sesi seleksi">Seleksi</button>
-
-                          {/* X — reject (only if not rejected) */}
+                          <button
+                            onClick={() => { setSelectionApp(app); setSelectionForm({ title: "", type: "INTERVIEW", scheduledAt: "", method: "ONLINE", location: "", meetingLink: "", interviewerName: "", notes: "" }); }}
+                            className="text-xs text-blue-600 hover:underline"
+                            title="Tambah sesi seleksi"
+                          >
+                            Seleksi
+                          </button>
                           {app.status !== "rejected" && (
                             <button
                               disabled={isSubmitting}
@@ -459,64 +472,34 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100">
             <p className="text-xs text-slate-400">
               Showing {((currentPage - 1) * PAGE_SIZE) + 1}–{Math.min(currentPage * PAGE_SIZE, filteredApps.length)} of {filteredApps.length} applications
             </p>
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-40 transition"
-              >
+              <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-40 transition">
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
-
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                 let p: number;
-                if (totalPages <= 5) {
-                  p = i + 1;
-                } else if (currentPage <= 3) {
-                  p = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  p = totalPages - 4 + i;
-                } else {
-                  p = currentPage - 2 + i;
-                }
+                if (totalPages <= 5) p = i + 1;
+                else if (currentPage <= 3) p = i + 1;
+                else if (currentPage >= totalPages - 2) p = totalPages - 4 + i;
+                else p = currentPage - 2 + i;
                 return (
-                  <button
-                    key={p}
-                    onClick={() => handlePageChange(p)}
-                    className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold transition ${
-                      p === currentPage
-                        ? "bg-blue-600 text-white shadow-sm"
-                        : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
+                  <button key={p} onClick={() => handlePageChange(p)} className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold transition ${p === currentPage ? "bg-blue-600 text-white shadow-sm" : "border border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
                     {p}
                   </button>
                 );
               })}
-
               {totalPages > 5 && currentPage < totalPages - 2 && (
                 <>
                   <span className="text-slate-400 text-xs px-1">…</span>
-                  <button
-                    onClick={() => handlePageChange(totalPages)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
-                  >
-                    {totalPages}
-                  </button>
+                  <button onClick={() => handlePageChange(totalPages)} className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">{totalPages}</button>
                 </>
               )}
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-40 transition"
-              >
+              <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-40 transition">
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -528,8 +511,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
       {detailApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-3">
                 <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white font-bold text-sm ${getAvatarColor(detailApp.user.name ?? "?")}`}>
@@ -544,11 +525,7 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                 <X className="h-4 w-4" />
               </button>
             </div>
-
-            {/* Scrollable body */}
             <div className="overflow-y-auto flex-1 p-6 space-y-5">
-
-              {/* Aplikasi info */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {([
                   ["Program",        detailApp.program.title],
@@ -562,8 +539,6 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   </div>
                 ))}
               </div>
-
-              {/* Motivasi */}
               {detailApp.notes && (
                 <div className="bg-slate-50 rounded-xl p-3 flex gap-2">
                   <MessageSquare className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
@@ -573,32 +548,27 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   </div>
                 </div>
               )}
-
-              {/* CV */}
               {detailApp.cvUrl && (
-                <a href={detailApp.cvUrl} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-semibold">
+                <a href={detailApp.cvUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-semibold">
                   <LinkIcon className="h-3.5 w-3.5" />
                   Buka Tautan CV / Lampiran
                 </a>
               )}
-
-              {/* ── Informasi Pribadi ── */}
+              {/* Informasi Pribadi */}
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
                   <p className="text-sm font-semibold text-blue-900">Informasi Pribadi</p>
-                  <p className="text-xs text-blue-600">Data kontak dan domisili</p>
                 </div>
                 <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {([
-                    ["Nama Panggilan",  detailApp.user.nickname],
-                    ["Nomor Telepon",   detailApp.user.phone],
-                    ["Tempat Lahir",    detailApp.user.birthPlace],
-                    ["Tanggal Lahir",   detailApp.user.birthDate ? new Date(detailApp.user.birthDate).toLocaleDateString("id-ID") : null],
-                    ["Jenis Kelamin",   detailApp.user.gender],
-                    ["Kota/Kabupaten",  detailApp.user.city],
-                    ["Provinsi",        detailApp.user.province],
-                    ["Alamat",          detailApp.user.address],
+                    ["Nama Panggilan", detailApp.user.nickname],
+                    ["Nomor Telepon",  detailApp.user.phone],
+                    ["Tempat Lahir",   detailApp.user.birthPlace],
+                    ["Tanggal Lahir",  detailApp.user.birthDate ? new Date(detailApp.user.birthDate).toLocaleDateString("id-ID") : null],
+                    ["Jenis Kelamin",  detailApp.user.gender],
+                    ["Kota/Kabupaten", detailApp.user.city],
+                    ["Provinsi",       detailApp.user.province],
+                    ["Alamat",         detailApp.user.address],
                   ] as [string, string | null | undefined][]).map(([label, val]) => (
                     <div key={label} className={label === "Alamat" ? "col-span-2 sm:col-span-3" : ""}>
                       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
@@ -607,22 +577,20 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   ))}
                 </div>
               </div>
-
-              {/* ── Pendidikan ── */}
+              {/* Pendidikan */}
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <div className="px-4 py-3 bg-violet-50 border-b border-violet-100">
                   <p className="text-sm font-semibold text-violet-900">Pendidikan</p>
-                  <p className="text-xs text-violet-600">Informasi akademik</p>
                 </div>
                 <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {([
-                    ["Institusi",      detailApp.user.institution],
-                    ["Fakultas",       detailApp.user.faculty],
-                    ["Program Studi",  detailApp.user.studyProgram],
-                    ["NIM",            detailApp.user.studentId],
-                    ["Semester",       detailApp.user.semester?.toString()],
-                    ["Tahun Masuk",    detailApp.user.entryYear?.toString()],
-                    ["Tahun Lulus",    detailApp.user.graduationYear?.toString()],
+                    ["Institusi",     detailApp.user.institution],
+                    ["Fakultas",      detailApp.user.faculty],
+                    ["Program Studi", detailApp.user.studyProgram],
+                    ["NIM",           detailApp.user.studentId],
+                    ["Semester",      detailApp.user.semester?.toString()],
+                    ["Tahun Masuk",   detailApp.user.entryYear?.toString()],
+                    ["Tahun Lulus",   detailApp.user.graduationYear?.toString()],
                   ] as [string, string | null | undefined][]).map(([label, val]) => (
                     <div key={label}>
                       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
@@ -631,32 +599,22 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   ))}
                 </div>
               </div>
-
-              {/* ── Skill & Portfolio ── */}
+              {/* Skill & Portfolio */}
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
                   <p className="text-sm font-semibold text-slate-800">Skill & Portfolio</p>
-                  <p className="text-xs text-slate-500">Tautan profesional dan keahlian</p>
                 </div>
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {([
-                    ["Skills",   detailApp.user.skills],
-                    ["GitHub",   detailApp.user.githubUsername],
-                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                  {([["Skills", detailApp.user.skills], ["GitHub", detailApp.user.githubUsername]] as [string, string | null | undefined][]).map(([label, val]) => (
                     <div key={label}>
                       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
                       <p className="text-sm text-slate-700 font-medium">{val ?? <span className="text-slate-300 font-normal">—</span>}</p>
                     </div>
                   ))}
-                  {([
-                    ["Portfolio URL", detailApp.user.portfolioUrl],
-                    ["LinkedIn URL",  detailApp.user.linkedinUrl],
-                  ] as [string, string | null | undefined][]).map(([label, val]) => (
+                  {([["Portfolio URL", detailApp.user.portfolioUrl], ["LinkedIn URL", detailApp.user.linkedinUrl]] as [string, string | null | undefined][]).map(([label, val]) => (
                     <div key={label}>
                       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
-                      {val
-                        ? <a href={val} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline font-medium truncate block">{val}</a>
-                        : <span className="text-sm text-slate-300">—</span>}
+                      {val ? <a href={val} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline font-medium truncate block">{val}</a> : <span className="text-sm text-slate-300">—</span>}
                     </div>
                   ))}
                   {detailApp.user.bio && (
@@ -667,12 +625,10 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   )}
                 </div>
               </div>
-
-              {/* ── Riwayat Seleksi ── */}
+              {/* Riwayat Seleksi */}
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <div className="px-4 py-3 bg-amber-50 border-b border-amber-100">
                   <p className="text-sm font-semibold text-amber-900">Riwayat Seleksi</p>
-                  <p className="text-xs text-amber-600">Sesi seleksi yang telah dijadwalkan</p>
                 </div>
                 <div className="p-4">
                   {detailApp.selectionSessions?.length ? (
@@ -693,15 +649,9 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   )}
                 </div>
               </div>
-
             </div>
-
-            {/* Footer */}
             <div className="shrink-0 px-6 py-4 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={() => setDetailApp(null)}
-                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition"
-              >
+              <button onClick={() => setDetailApp(null)} className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition">
                 Tutup
               </button>
             </div>
@@ -709,9 +659,45 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
         </div>
       )}
 
-      {selectionApp && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"><form onSubmit={handleCreateSelection} className="w-full max-w-lg space-y-3 rounded-2xl bg-white p-6 shadow-xl"><div className="flex justify-between"><div><h3 className="font-bold">Tambah Sesi Seleksi</h3><p className="text-sm text-slate-500">{selectionApp.user.name ?? selectionApp.user.email}</p></div><button type="button" onClick={() => setSelectionApp(null)}><X /></button></div><input required placeholder="Judul sesi" className="w-full rounded border p-2" value={selectionForm.title} onChange={e => setSelectionForm({ ...selectionForm, title: e.target.value })} /><div className="grid grid-cols-2 gap-3"><select className="rounded border p-2" value={selectionForm.type} onChange={e => setSelectionForm({ ...selectionForm, type: e.target.value })}><option value="ADMINISTRATION">Administrasi</option><option value="INTERVIEW">Interview</option><option value="TECHNICAL_TEST">Technical Test</option><option value="HR_INTERVIEW">HR Interview</option><option value="FINAL_INTERVIEW">Final Interview</option><option value="OTHER">Lainnya</option></select><select className="rounded border p-2" value={selectionForm.method} onChange={e => setSelectionForm({ ...selectionForm, method: e.target.value })}><option value="ONLINE">Online</option><option value="OFFLINE">Offline</option></select></div><input required type="datetime-local" className="w-full rounded border p-2" value={selectionForm.scheduledAt} onChange={e => setSelectionForm({ ...selectionForm, scheduledAt: e.target.value })} /><input placeholder={selectionForm.method === "ONLINE" ? "Link meeting" : "Lokasi"} className="w-full rounded border p-2" value={selectionForm.method === "ONLINE" ? selectionForm.meetingLink : selectionForm.location} onChange={e => setSelectionForm(selectionForm.method === "ONLINE" ? { ...selectionForm, meetingLink: e.target.value } : { ...selectionForm, location: e.target.value })} /><input placeholder="Penilai / pewawancara" className="w-full rounded border p-2" value={selectionForm.interviewerName} onChange={e => setSelectionForm({ ...selectionForm, interviewerName: e.target.value })} /><textarea placeholder="Catatan" className="w-full rounded border p-2" value={selectionForm.notes} onChange={e => setSelectionForm({ ...selectionForm, notes: e.target.value })} /><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setSelectionApp(null)}>Batal</Button><Button disabled={isSubmitting} className="bg-blue-600">{isSubmitting ? "Menyimpan..." : "Simpan sesi"}</Button></div></form></div>}
+      {/* Selection Modal */}
+      {selectionApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <form onSubmit={handleCreateSelection} className="w-full max-w-lg space-y-3 rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex justify-between">
+              <div>
+                <h3 className="font-bold">Tambah Sesi Seleksi</h3>
+                <p className="text-sm text-slate-500">{selectionApp.user.name ?? selectionApp.user.email}</p>
+              </div>
+              <button type="button" onClick={() => setSelectionApp(null)}><X /></button>
+            </div>
+            <input required placeholder="Judul sesi" className="w-full rounded border p-2" value={selectionForm.title} onChange={e => setSelectionForm({ ...selectionForm, title: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <select className="rounded border p-2" value={selectionForm.type} onChange={e => setSelectionForm({ ...selectionForm, type: e.target.value })}>
+                <option value="ADMINISTRATION">Administrasi</option>
+                <option value="INTERVIEW">Interview</option>
+                <option value="TECHNICAL_TEST">Technical Test</option>
+                <option value="HR_INTERVIEW">HR Interview</option>
+                <option value="FINAL_INTERVIEW">Final Interview</option>
+                <option value="OTHER">Lainnya</option>
+              </select>
+              <select className="rounded border p-2" value={selectionForm.method} onChange={e => setSelectionForm({ ...selectionForm, method: e.target.value })}>
+                <option value="ONLINE">Online</option>
+                <option value="OFFLINE">Offline</option>
+              </select>
+            </div>
+            <input required type="datetime-local" className="w-full rounded border p-2" value={selectionForm.scheduledAt} onChange={e => setSelectionForm({ ...selectionForm, scheduledAt: e.target.value })} />
+            <input placeholder={selectionForm.method === "ONLINE" ? "Link meeting" : "Lokasi"} className="w-full rounded border p-2" value={selectionForm.method === "ONLINE" ? selectionForm.meetingLink : selectionForm.location} onChange={e => setSelectionForm(selectionForm.method === "ONLINE" ? { ...selectionForm, meetingLink: e.target.value } : { ...selectionForm, location: e.target.value })} />
+            <input placeholder="Penilai / pewawancara" className="w-full rounded border p-2" value={selectionForm.interviewerName} onChange={e => setSelectionForm({ ...selectionForm, interviewerName: e.target.value })} />
+            <textarea placeholder="Catatan" className="w-full rounded border p-2" value={selectionForm.notes} onChange={e => setSelectionForm({ ...selectionForm, notes: e.target.value })} />
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setSelectionApp(null)}>Batal</Button>
+              <Button disabled={isSubmitting} className="bg-blue-600">{isSubmitting ? "Menyimpan..." : "Simpan sesi"}</Button>
+            </div>
+          </form>
+        </div>
+      )}
 
-      {/* Reject Reason Modal */}
+      {/* Reject Modal */}
       {rejectingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-white rounded-2xl border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -722,7 +708,7 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-slate-600">Tambahkan alasan penolakan (opsional). Alasan ini akan dikirim ke pendaftar.</p>
+              <p className="text-sm text-slate-600">Tambahkan alasan penolakan (opsional).</p>
               <textarea
                 rows={3}
                 placeholder="Alasan penolakan..."
@@ -731,14 +717,8 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                 className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition resize-none"
               />
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setRejectingId(null)} className="text-slate-600 border-slate-200">
-                  Batal
-                </Button>
-                <Button
-                  disabled={isSubmitting}
-                  onClick={() => handleReview(rejectingId, "rejected", rejectNotes)}
-                  className="bg-red-600 hover:bg-red-700 text-white gap-1.5"
-                >
+                <Button variant="outline" onClick={() => setRejectingId(null)} className="text-slate-600 border-slate-200">Batal</Button>
+                <Button disabled={isSubmitting} onClick={() => handleReview(rejectingId, "rejected", rejectNotes)} className="bg-red-600 hover:bg-red-700 text-white gap-1.5">
                   {isSubmitting ? "Memproses..." : "Tolak Pendaftar"}
                 </Button>
               </div>
