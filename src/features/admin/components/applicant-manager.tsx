@@ -97,11 +97,11 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
 
   // Counts for stat cards & filter tabs
   const counts = useMemo(() => ({
-    all: applications.length,
-    pending: applications.filter(a => normalizedStatus(a.status) === "pending").length,
-    review: applications.filter(a => normalizedStatus(a.status) === "review").length,
+    pending:  applications.filter(a => normalizedStatus(a.status) === "pending").length,
+    review:   applications.filter(a => normalizedStatus(a.status) === "review").length,
     approved: applications.filter(a => normalizedStatus(a.status) === "approved").length,
     rejected: applications.filter(a => normalizedStatus(a.status) === "rejected").length,
+    get all() { return this.pending + this.approved + this.rejected; },
   }), [applications]);
 
   const filteredApps = useMemo(() => {
