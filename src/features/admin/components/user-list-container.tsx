@@ -158,7 +158,6 @@ export function UserListContainer({
 
   // Stat counts
   const counts = useMemo(() => {
-    const total     = users.length;
     const completed = users.filter(u => !!u.certificate).length;
     // ongoing  = ACCEPTED + sudah ada mentor
     const ongoing   = users.filter(u =>
@@ -172,6 +171,8 @@ export function UserListContainer({
       u.applications?.some(a => a.status === "ACCEPTED") &&
       !u.assignedMentor
     ).length;
+    // total = ongoing + upcoming + completed (hanya intern dengan application ACCEPTED)
+    const total = ongoing + upcoming + completed;
     return { total, ongoing, upcoming, completed };
   }, [users]);
 
