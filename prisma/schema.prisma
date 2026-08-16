@@ -204,9 +204,10 @@ model Logbook {
   id        String   @id @default(cuid())
   userId    String
   date      DateTime @default(now())
-  activity  String   @db.Text
-  progress  Int      @default(0) // 0-100% progress indicator
-  status    String   @default("pending") // pending, approved, rejected
+  activity        String   @db.Text
+  progress        Int      @default(0)   // 0-100% progress tugas hari ini
+  projectProgress Int      @default(0)   // 0-100% estimasi progress keseluruhan proyek
+  status          String   @default("pending") // pending, approved, rejected
   feedback  String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
