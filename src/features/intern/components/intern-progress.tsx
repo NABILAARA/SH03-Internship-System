@@ -190,7 +190,7 @@ export function InternProgress({ data }: Readonly<InternProgressProps>) {
 
       {/* Logbook Timeline */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-        <h2 className="text-lg font-bold text-slate-800">Timeline Logbook</h2>
+        <h2 className="text-lg font-bold text-slate-800">Riwayat Logbook</h2>
 
         {sortedLogbooks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-slate-400">
@@ -217,25 +217,14 @@ export function InternProgress({ data }: Readonly<InternProgressProps>) {
                 {/* Activity */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-slate-700 line-clamp-2">{log.activity}</p>
-                  <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <div className="w-[120px] bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                        <div
-                          className="h-1.5 bg-blue-500 rounded-full"
-                          style={{ width: `${log.progress}%` }}
-                        />
-                      </div>
-                      <span className="text-[11px] text-slate-500 font-medium">{log.progress}%</span>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <div className="w-[120px] bg-violet-100 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="h-1.5 bg-violet-500 rounded-full"
+                        style={{ width: `${log.projectProgress}%` }}
+                      />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-[120px] bg-violet-100 h-1.5 rounded-full overflow-hidden">
-                        <div
-                          className="h-1.5 bg-violet-500 rounded-full"
-                          style={{ width: `${log.projectProgress}%` }}
-                        />
-                      </div>
-                      <span className="text-[11px] text-violet-500 font-medium">{log.projectProgress}% proyek</span>
-                    </div>
+                    <span className="text-[11px] text-violet-500 font-medium">{log.projectProgress}% proyek</span>
                   </div>
                 </div>
 
