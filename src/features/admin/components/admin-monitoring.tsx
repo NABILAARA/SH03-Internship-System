@@ -11,6 +11,7 @@ type MonitoringLogbook = {
   id: string;
   activity: string;
   progress: number;
+  projectProgress: number;
   status: string;
   feedback: string | null;
   date: Date;
@@ -290,16 +291,16 @@ export function AdminMonitoring({ logbooks }: Readonly<AdminMonitoringProps>) {
                       <p className="text-xs text-slate-600">{formatDate(log.date)}</p>
                     </td>
 
-                    {/* Progress bar */}
+                    {/* Progress bar — overall project */}
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden min-w-[60px]">
+                        <div className="flex-1 h-1.5 bg-violet-100 rounded-full overflow-hidden min-w-[60px]">
                           <div
-                            className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                            style={{ width: `${log.progress}%` }}
+                            className="h-full rounded-full bg-violet-500 transition-all duration-500"
+                            style={{ width: `${log.projectProgress}%` }}
                           />
                         </div>
-                        <span className="text-xs text-slate-500 font-medium w-8 shrink-0">{log.progress}%</span>
+                        <span className="text-xs text-violet-600 font-medium w-8 shrink-0">{log.projectProgress}%</span>
                       </div>
                     </td>
 
