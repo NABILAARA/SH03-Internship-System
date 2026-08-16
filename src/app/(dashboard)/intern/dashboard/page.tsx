@@ -33,7 +33,7 @@ export default async function InternDashboardPage() {
   const [
     approvedLogs, allProgressLogs,
     application, hasCertificate,
-    recentLogs, mentorAssignment, weeklyLogs, totalLogs,
+    recentLogs, mentorAssignment, totalLogs,
   ] = await Promise.all([
     userId ? prisma.logbook.count({ where: { userId, status: "approved" } }) : Promise.resolve(0),
     userId ? prisma.logbook.findFirst({ where: { userId }, orderBy: { date: "desc" }, select: { projectProgress: true } }) : Promise.resolve(null),
@@ -50,13 +50,6 @@ export default async function InternDashboardPage() {
       where: { internId: userId },
       include: { mentor: { select: { id: true, name: true, email: true } } },
     }) : Promise.resolve(null),
-    // weekly = logbook minggu ini
-    userId ? prisma.logbook.count({
-      where: {
-        userId,
-        date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-      },
-    }) : Promise.resolve(0),
     // total = semua logbook yang pernah dikirim
     userId ? prisma.logbook.count({ where: { userId } }) : Promise.resolve(0),
   ]);
