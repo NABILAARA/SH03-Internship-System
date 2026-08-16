@@ -144,7 +144,6 @@ export function MentorListContainer({
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Total Mentors</p>
             <p className="text-2xl font-bold text-slate-800 leading-tight">{counts.total}</p>
-            <p className="text-xs text-slate-400 mt-0.5">vs last month</p>
           </div>
         </div>
 
