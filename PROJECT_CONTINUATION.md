@@ -299,3 +299,157 @@ Seed akan diblokir otomatis oleh guard, tapi tetap harus berhati-hati.
 - File: `src/features/admin/components/user-list.tsx`
 
 **Last Updated:** 2026-07-29 (lanjutan)
+
+---
+
+## Current Session Status — 2026-08-15
+
+### Newly Completed
+
+#### 1. Rate Limiting Login — Upstash Redis
+- Login rate limit: **5 attempt per 15 menit per IP** menggunakan Upstash Redis (sliding window).
+- Implementasi via `loginAction` server action di `src/features/auth/services/auth.actions.ts`.
+- `auth-card.tsx` diupdate: login sekarang memanggil `loginAction` bukan `signIn()` langsung dari client.
+- Pesan error rate limit muncul di UI: `"Terlalu banyak percobaan login. Akses diblokir selama X menit."`
+- Library: `@upstash/ratelimit` + `@upstash/redis`.
+- Environment variables wajib: `UPSTASH_REDIS_REST_URL` dan `UPSTASH_REDIS_REST_TOKEN`.
+- File: `src/lib/ratelimit.ts`, `src/features/auth/services/auth.actions.ts`, `src/features/auth/components/auth-card.tsx`.
+
+#### 2. Next.js Security Patches
+- Upgrade Next.js dari `^15.0.3` ke `15.3.8` (versi patched untuk CVE-2025-66478, CVE-2025-55183, CVE-2025-67779).
+- `eslint-config-next` disesuaikan ke `15.3.8`.
+- Turbopack diaktifkan via `--turbopack` flag di dev script.
+- `next.config.ts` ditambahkan (sebelumnya kosong).
+
+#### 3. Tambah Field `projectProgress` ke Model `Logbook`
+- Field baru: `projectProgress Int @default(0)` — estimasi progress keseluruhan proyek oleh intern (0–100%).
+- Migration: `20260815100000_add_project_progress_to_logbook` — applied ke Supabase.
+- **Berbeda dari `progress`** (progress tugas hari ini) — `projectProgress` adalah estimasi keseluruhan proyek magang.
+- File: `prisma/schema.prisma`, migration SQL, `src/features/logbook/services/logbook.actions.ts`.
+
+#### 4. UI Slider Kedua di Form Logbook Intern
+- Form logbook di `/intern/logbook` sekarang memiliki **2 slider**:
+  - Biru: "Progress Tugas Hari Ini" — per-logbook daily progress (wajib 100% untuk submit).
+  - Ungu: "Estimasi Progress Keseluruhan Proyek" — disimpan sebagai `projectProgress`.
+- Slider ungu juga ada di form **resubmit** (edit & kirim ulang logbook yang ditolak).
+- Draft localStorage include `projectProgress`.
+- File: `src/features/logbook/components/intern-logbook.tsx`.
+
+#### 5. Konsistensi Tampilan `projectProgress` di Seluruh Sistem
+- **Riwayat logbook intern** (`/intern/logbook`): hanya tampil bar ungu `projectProgress` (bar biru dihapus).
+- **Halaman progress intern** (`/intern/progress`): big number dan bar ungu menampilkan `latestProjectProgress` (dari logbook terakhir), bukan rata-rata. Timeline logbook hanya bar ungu.
+- **Dashboard intern** (`/intern/dashboard`): card "Overall Progress" menampilkan `projectProgress` dari logbook terakhir. Activity feed menampilkan `X% Overall Project`.
+- **Logbook review mentor** (`/mentor/logbook-review`): bar biru dihapus, hanya bar ungu `projectProgress`.
+- **Assigned interns mentor** (`/mentor/assigned-interns`): Last 5 Logbooks menampilkan bar ungu `projectProgress`.
+- **Monitoring admin** (`/admin/monitoring`): kolom Progress menampilkan bar ungu `projectProgress`.
+
+#### 6. Perbaikan Dashboard Intern
+- Card "Logbooks Sent" sekarang menampilkan **total** semua logbook yang pernah dikirim (bukan hanya weekly).
+- Card "Overall Progress" menggantikan "Average Progress" — nilai dari `projectProgress` logbook terakhir.
+- Tombol "Message" di card Your Mentor dihapus (tidak ada fungsi).
+- Widget "Mid-Term Evaluation" di sidebar dihapus.
+
+#### 7. Profile Intern — Perbaikan Label & Nilai
+- Label "Supervisor" diganti ke **"Mentor"**.
+- Nilai "Mentor" sekarang diambil dari relasi `internRelation → mentor.name` (nama asli mentor yang di-assign), bukan field `supervisorName`.
+- Field "Dokumen" sekarang dinamis: **COMPLETE** (hijau) jika 21 field profil terisi semua, **INCOMPLETE** (amber) jika belum.
+- File: `src/features/profile/components/profile-form.tsx`, `src/features/profile/services/profile.actions.ts`.
+
+#### 8. Dashboard Mentor — Schedule Sync
+- Tombol "Schedule Sync" yang sebelumnya tidak berfungsi (`<button>` kosong) sekarang menjadi `<Link>` ke `/mentor/announcements`.
+
+#### 9. Admin Dashboard — Tasks & To Do
+- Semua 5 task sebelumnya menggunakan data hardcoded atau tidak relevan.
+- Sekarang **4 task dari data real DB**, hanya tampil kalau count > 0:
+  1. "Review pending applications" → `pendingApprovals` → `/admin/applicants`
+  2. "Review pending logbooks" → `pendingLogbooks` → `/admin/monitoring`
+  3. "Assign mentor to interns" → `internsWithoutMentor` → `/admin/interns`
+  4. "Interns not yet evaluated" → `internsNotEvaluated` → `/admin/interns`
+- Kalau semua 0 → tampil "✓ All caught up! Nothing pending."
+- Setiap task adalah link clickable dengan hover effect.
+- Link "View All" diperbaiki dari `/admin/reports` ke `/admin/monitoring`.
+- File: `src/features/admin/services/dashboard.actions.ts`, `src/features/admin/components/admin-dashboard.tsx`, `src/app/(dashboard)/admin/dashboard/page.tsx`.
+
+#### 10. Search Input `maxLength`
+- Semua search input di seluruh sistem ditambahkan `maxLength={100}`:
+  - `mentor-assignment.tsx`, `mentor-list-container.tsx`, `registration-history.tsx`, `mentor-logbook-review.tsx`, `assigned-interns-list.tsx`.
+
+#### 11. Build Fixes (Vercel)
+- Hapus unused variable `totalLogs`, `weeklyLogs`, `programs` prop dari `MentorListContainer`.
+- Fix ESLint error `no-unused-vars` di `intern/dashboard/page.tsx`.
+- Fix TypeScript build error di `mentor-list-container.tsx` (unused `Program` interface dan `programs` prop).
+- `tsconfig.json` — `jsx` diset ke `preserve` (required by Next.js 15).
+
+#### 12. Login Page — Strip Credentials dari URL
+- `src/app/(public)/login/page.tsx` diupdate: kalau ada `email` atau `password` di query params, di-redirect ke `/login` yang bersih.
+- Mencegah credentials masuk ke server logs dan browser history.
+
+---
+
+## Updated Database Status
+
+Applied migrations (tambahan sejak 2026-07-29):
+- `20260815100000_add_project_progress_to_logbook` — field `projectProgress Int @default(0)` di model `Logbook`.
+
+---
+
+## Updated Key Implementation Files
+
+- `src/lib/ratelimit.ts` — Upstash Redis rate limiter config (loginRatelimit, 5/15m sliding window).
+- `src/features/auth/services/auth.actions.ts` — `loginAction` dengan rate limit + credentials verification.
+- `src/features/auth/components/auth-card.tsx` — pakai `loginAction` untuk login.
+- `src/features/logbook/services/logbook.actions.ts` — `createLogbookAction` & `resubmitLogbookAction` terima `projectProgress`.
+- `src/features/logbook/components/intern-logbook.tsx` — slider kedua ungu + riwayat hanya bar ungu.
+- `src/features/logbook/components/mentor-logbook-review.tsx` — hanya bar ungu `projectProgress`.
+- `src/features/intern/services/progress.actions.ts` — select `projectProgress`, expose `latestProjectProgress`.
+- `src/features/intern/components/intern-progress.tsx` — big number & bar dari `latestProjectProgress`, timeline hanya bar ungu.
+- `src/app/(dashboard)/intern/dashboard/page.tsx` — Overall Progress dari logbook terakhir, total logbooks sent, hapus message button & mid-term widget.
+- `src/features/mentor/components/assigned-interns-list.tsx` — Last 5 Logbooks pakai `projectProgress`.
+- `src/features/admin/components/admin-monitoring.tsx` — kolom progress pakai `projectProgress` (ungu).
+- `src/features/admin/services/dashboard.actions.ts` — tambah `internsWithoutMentor` & `internsNotEvaluated`.
+- `src/features/admin/components/admin-dashboard.tsx` — Tasks & To Do dari data real DB.
+- `src/features/profile/components/profile-form.tsx` — label Mentor, nilai dari relasi, Dokumen dinamis.
+- `src/features/profile/services/profile.actions.ts` — include `internRelation → mentor.name`.
+- `src/app/(public)/login/page.tsx` — strip credentials dari URL.
+- `next.config.ts` — konfigurasi dasar Next.js 15.
+- `package.json` — Next.js 15.3.8, Turbopack enabled, `@upstash/ratelimit`, `@upstash/redis`.
+
+---
+
+## Environment Variables Wajib (Tambahan)
+
+```env
+UPSTASH_REDIS_REST_URL="https://your-db.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="your-token"
+```
+
+Wajib di-set di Vercel Environment Variables dan `.env` lokal. Tanpa ini, login akan error 500.
+
+---
+
+## How to Continue
+
+```bash
+npm run dev
+npx prisma migrate deploy
+npm run build
+```
+
+**PENTING:**
+- Jangan jalankan `prisma db seed` selama ada data pengguna nyata.
+- `DATABASE_URL` di Vercel wajib punya `connection_limit=5&pool_timeout=20`.
+- `UPSTASH_REDIS_REST_URL` dan `UPSTASH_REDIS_REST_TOKEN` wajib ada di Vercel env vars.
+
+---
+
+## Possible Next Enhancements
+
+- Backup database sebelum migrasi apapun.
+- Tambah field `startDate DateTime?` dan `endDate DateTime?` ke `InternshipProgram` (plan sudah ada, belum dieksekusi).
+- Security headers di `next.config.ts` (CSP, X-Frame-Options, Referrer-Policy).
+- Fitur lupa password via email reset link.
+- WebSocket real-time updates untuk logbook review.
+- Google Drive API auto-create folder.
+
+**Last Updated:** 2026-08-15
+**Session Status:** Rate limiting Upstash Redis, projectProgress field + UI konsisten di seluruh sistem, dashboard fixes, profile fixes, Tasks & To Do real data — semua implemented dan verified.
