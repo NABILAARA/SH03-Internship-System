@@ -3,8 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import {
   ClipboardList, CheckCircle2, TrendingUp, Award,
-  Clock, Folder, Code2, ArrowUpRight, Pencil,
-  CheckCircle, ChevronRight,
+  Clock, Folder, ArrowUpRight, Pencil,
+  CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -267,19 +267,6 @@ export default async function InternDashboardPage() {
             </ul>
           </div>
 
-          {/* Mid-Term Evaluation reminder */}
-          <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl p-4 flex items-center gap-3 text-white">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10">
-              <Code2 className="h-4 w-4 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold">Mid-Term Evaluation</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                {hasCertificate ? "Completed. Certificate issued." : "Coming up in 5 days. Prepare your reports."}
-              </p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
-          </div>
         </div>
       </div>
     </div>
