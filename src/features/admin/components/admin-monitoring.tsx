@@ -257,7 +257,7 @@ export function AdminMonitoring({ logbooks }: Readonly<AdminMonitoringProps>) {
                   <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Intern</th>
                   <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">Mentor</th>
                   <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">Tanggal</th>
-                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[130px]">Progress</th>
+                  <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 w-[130px]">Overall Progress</th>
                   <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">Status</th>
                   <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 max-w-[220px]">Aktivitas</th>
                   <th className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 max-w-[180px]">Feedback</th>
