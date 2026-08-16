@@ -50,6 +50,13 @@ export async function getProfileData() {
       accounts: {
         where: { provider: "github" },
         select: { providerAccountId: true }
+      },
+      internRelation: {
+        select: {
+          mentor: {
+            select: { name: true }
+          }
+        }
       }
     }
   });
