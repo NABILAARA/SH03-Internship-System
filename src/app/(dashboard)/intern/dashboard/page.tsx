@@ -33,7 +33,7 @@ export default async function InternDashboardPage() {
   const [
     approvedLogs, allProgressLogs,
     application, hasCertificate,
-    recentLogs, mentorAssignment, weeklyLogs,
+    recentLogs, mentorAssignment, weeklyLogs, totalLogs,
   ] = await Promise.all([
     userId ? prisma.logbook.count({ where: { userId, status: "approved" } }) : Promise.resolve(0),
     userId ? prisma.logbook.findFirst({ where: { userId }, orderBy: { date: "desc" }, select: { projectProgress: true } }) : Promise.resolve(null),
@@ -50,13 +50,15 @@ export default async function InternDashboardPage() {
       where: { internId: userId },
       include: { mentor: { select: { id: true, name: true, email: true } } },
     }) : Promise.resolve(null),
-    // weekly = this week's logbooks
+    // weekly = logbook minggu ini
     userId ? prisma.logbook.count({
       where: {
         userId,
         date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
       },
     }) : Promise.resolve(0),
+    // total = semua logbook yang pernah dikirim
+    userId ? prisma.logbook.count({ where: { userId } }) : Promise.resolve(0),
   ]);
 
   // Overall Progress = projectProgress dari logbook terakhir yang dikirim
@@ -98,10 +100,9 @@ export default async function InternDashboardPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
               <ClipboardList className="h-5 w-5 text-blue-600" />
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Weekly</span>
           </div>
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Logbooks Sent</p>
-          <p className="text-2xl font-bold text-slate-800 leading-tight mt-0.5">{weeklyLogs} Report</p>
+          <p className="text-2xl font-bold text-slate-800 leading-tight mt-0.5">{totalLogs} Report</p>
         </div>
 
         {/* Logbooks Approved */}
@@ -110,7 +111,6 @@ export default async function InternDashboardPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Total</span>
           </div>
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Logbooks Approved</p>
           <p className="text-2xl font-bold text-slate-800 leading-tight mt-0.5">{approvedLogs} Report</p>
@@ -189,7 +189,7 @@ export default async function InternDashboardPage() {
                         )}
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {log.projectProgress}% Overall Project
+                          {log.projectProgress}% Overall Progress
                         </span>
                       </div>
                     </div>
@@ -231,10 +231,6 @@ export default async function InternDashboardPage() {
                       {mentorAssignment.mentor.name ?? "—"}
                     </p>
                     <p className="text-[11px] text-slate-400 truncate">{mentorAssignment.mentor.email}</p>
-                    <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-600">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
-                      ACTIVE
-                    </span>
                   </div>
                 </div>
                 <button className="w-full rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 py-2 transition">
