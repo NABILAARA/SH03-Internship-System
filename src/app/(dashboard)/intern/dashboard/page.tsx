@@ -233,9 +233,6 @@ export default async function InternDashboardPage() {
                     <p className="text-[11px] text-slate-400 truncate">{mentorAssignment.mentor.email}</p>
                   </div>
                 </div>
-                <button className="w-full rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 py-2 transition">
-                  Message
-                </button>
               </>
             ) : (
               <p className="text-sm text-slate-400 italic">Belum ada mentor yang ditugaskan.</p>
