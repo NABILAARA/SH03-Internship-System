@@ -29,6 +29,23 @@ export async function getDashboardStats() {
     });
     const totalMentors      = await prisma.user.count({ where: { role: "MENTOR", approvalStatus: "APPROVED" } });
     const pendingLogbooks   = await prisma.logbook.count({ where: { status: "pending" } });
+    const internsWithoutMentor = await prisma.user.count({
+      where: {
+        role: "INTERN",
+        approvalStatus: "APPROVED",
+        applications: { some: { status: "ACCEPTED" } },
+        internRelation: null,
+      }
+    });
+    const internsNotEvaluated = await prisma.user.count({
+      where: {
+        role: "INTERN",
+        approvalStatus: "APPROVED",
+        applications: { some: { status: "ACCEPTED" } },
+        certificate: null,
+        internEvaluation: null,
+      }
+    });
 
     // Upcoming schedule — ambil 3 announcement dengan eventDate terdekat ke depan
     const upcomingSchedule = await prisma.announcement.findMany({
@@ -110,6 +127,8 @@ export async function getDashboardStats() {
         pendingApprovals,
         totalMentors,
         pendingLogbooks,
+        internsWithoutMentor,
+        internsNotEvaluated,
         latestApplications,
         internChartData,
         programPieData,

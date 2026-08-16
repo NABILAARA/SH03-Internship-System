@@ -33,6 +33,8 @@ interface DashboardData {
   pendingApprovals: number;
   totalMentors: number;
   pendingLogbooks: number;
+  internsWithoutMentor: number;
+  internsNotEvaluated: number;
   latestApplications: Application[];
   internChartData: ChartPoint[];
   programPieData: PiePoint[];
@@ -342,28 +344,43 @@ export function AdminDashboard({ initialData }: Readonly<{ initialData: Dashboar
           <div className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
             <div className="flex items-center justify-between mb-2.5">
               <h2 className="text-sm font-bold text-slate-800">Tasks & To Do</h2>
-              <Link href="/admin/reports" className="text-[10px] font-semibold text-blue-600 hover:text-blue-800 transition">View All</Link>
+              <Link href="/admin/monitoring" className="text-[10px] font-semibold text-blue-600 hover:text-blue-800 transition">View All</Link>
             </div>
-            <div className="space-y-2">
-              {[
-                { task: "Review new applications", count: data.pendingApprovals, due: null, done: false },
-                { task: "Review logbooks this week", count: data.pendingLogbooks, due: null, done: false },
-                { task: "Mentor set up with Batch 2", count: null, due: "Tomorrow", done: false },
-                { task: "Evaluate intern progress", count: null, due: null, done: false },
-                { task: "Prepare closing report", count: null, due: "In 3 days", done: false },
-              ].map((t) => (
-                <div key={t.task} className="flex items-center gap-2">
-                  <Square className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-                  <span className="flex-1 text-[11px] text-slate-600 leading-tight">{t.task}</span>
-                  {t.count !== null && t.count > 0 && (
-                    <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-600">{t.count}</span>
-                  )}
-                  {t.due && (
-                    <span className={`text-[9px] font-semibold ${t.due === "Tomorrow" ? "text-amber-500" : "text-slate-400"}`}>{t.due}</span>
-                  )}
+            {(() => {
+              const tasks = [
+                { task: "Review pending applications", count: data.pendingApprovals,      href: "/admin/applicants" },
+                { task: "Review pending logbooks",     count: data.pendingLogbooks,       href: "/admin/monitoring" },
+                { task: "Assign mentor to interns",    count: data.internsWithoutMentor,  href: "/admin/interns"    },
+                { task: "Interns not yet evaluated",   count: data.internsNotEvaluated,   href: "/admin/interns"    },
+              ].filter((t) => t.count > 0);
+
+              if (tasks.length === 0) {
+                return (
+                  <div className="flex items-center gap-2 py-1.5">
+                    <span className="text-emerald-500">✓</span>
+                    <span className="text-[11px] text-emerald-600 font-semibold">All caught up! Nothing pending.</span>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-1.5">
+                  {tasks.map((t) => (
+                    <Link
+                      key={t.task}
+                      href={t.href}
+                      className="flex items-center gap-2 rounded-lg hover:bg-slate-50 px-1.5 py-1.5 -mx-1.5 transition group"
+                    >
+                      <Square className="h-3.5 w-3.5 shrink-0 text-slate-300 group-hover:text-blue-400 transition" />
+                      <span className="flex-1 text-[11px] text-slate-600 leading-tight min-w-0 group-hover:text-blue-600 transition">{t.task}</span>
+                      <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 shrink-0 group-hover:bg-blue-200 transition">
+                        {t.count}
+                      </span>
+                    </Link>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
 
           {/* Quick Links — 4 horizontal */}
