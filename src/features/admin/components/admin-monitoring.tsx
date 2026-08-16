@@ -62,8 +62,6 @@ export function AdminMonitoring({ logbooks }: Readonly<AdminMonitoringProps>) {
   const pendingCount  = logbooks.filter(l => l.status === "pending").length;
   const approvedCount = logbooks.filter(l => l.status === "approved").length;
   const rejectedCount = logbooks.filter(l => l.status === "rejected").length;
-  const finalCount    = approvedCount + rejectedCount;
-  const successRate   = finalCount > 0 ? Math.round((approvedCount / finalCount) * 100) : 0;
 
   /* Unique interns & mentors for dropdowns */
   const uniqueInterns = useMemo(() =>
@@ -115,49 +113,49 @@ export function AdminMonitoring({ logbooks }: Readonly<AdminMonitoringProps>) {
         <p className="text-sm text-slate-500 mt-0.5">Monitor daily intern activities and logbooks</p>
       </div>
 
-      {/* Stat Cards — 3 kolom */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Stat Cards — 4 kolom */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Logbook */}
         <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Logbook</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Logbook</p>
             <p className="text-3xl font-bold text-slate-800 mt-1 leading-tight">{logbooks.length}</p>
-            <p className="text-xs text-emerald-500 font-semibold mt-1.5 flex items-center gap-1">
-              +12% from last week
-            </p>
           </div>
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50">
             <FileText className="h-5 w-5 text-blue-500" />
           </div>
         </div>
 
-        {/* Menunggu Review */}
+        {/* Pending */}
         <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Waiting for Review</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending</p>
             <p className="text-3xl font-bold text-amber-500 mt-1 leading-tight">{pendingCount}</p>
-            <p className="text-xs text-amber-500 font-semibold mt-1.5 flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Urgent attention needed
-            </p>
           </div>
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50">
             <Clock className="h-5 w-5 text-amber-500" />
           </div>
         </div>
 
-        {/* Status Final */}
+        {/* Approved */}
         <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Status Final</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-1 leading-tight">{finalCount}</p>
-            <p className="text-xs text-emerald-500 font-semibold mt-1.5 flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              Success rate: {successRate}%
-            </p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approved</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-1 leading-tight">{approvedCount}</p>
           </div>
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+          </div>
+        </div>
+
+        {/* Rejected */}
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex items-start justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rejected</p>
+            <p className="text-3xl font-bold text-rose-500 mt-1 leading-tight">{rejectedCount}</p>
+          </div>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50">
+            <X className="h-5 w-5 text-rose-500" />
           </div>
         </div>
       </div>
