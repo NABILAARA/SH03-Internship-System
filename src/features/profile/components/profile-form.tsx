@@ -379,7 +379,16 @@ export function ProfileForm({ user }: Readonly<ProfileFormProps>) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><Field label="Portfolio URL"><input className={inputClass} value={internData.portfolioUrl} onChange={e => updateInternField("portfolioUrl", e.target.value)} /></Field><Field label="LinkedIn URL"><input className={inputClass} value={internData.linkedinUrl} onChange={e => updateInternField("linkedinUrl", e.target.value)} /></Field><Field label="Skills"><input className={inputClass} placeholder="React, Figma, ..." value={internData.skills} onChange={e => updateInternField("skills", e.target.value)} /></Field><Field label="GitHub username"><input className={inputClass} value={internData.githubUsername} onChange={e => updateInternField("githubUsername", e.target.value)} /></Field><div className="sm:col-span-2"><Field label="Tentang diri"><textarea className={inputClass} rows={2} value={internData.bio} onChange={e => updateInternField("bio", e.target.value)} /></Field></div></div>
           </SectionCard>
           <SectionCard icon={<Shield className="h-4 w-4 text-amber-600" />} title="Informasi Internship" description="Data penempatan dikelola oleh Admin">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm"><p><span className="text-muted-foreground">Posisi:</span> {user.internshipPosition ?? "Belum ditentukan"}</p><p><span className="text-muted-foreground">Mentor:</span> {user.internRelation?.mentor?.name ?? "Belum ditentukan"}</p><p><span className="text-muted-foreground">Dokumen:</span> {user.documentStatus ?? "INCOMPLETE"}</p></div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <p><span className="text-muted-foreground">Posisi:</span> {user.internshipPosition ?? "Belum ditentukan"}</p>
+              <p><span className="text-muted-foreground">Mentor:</span> {user.internRelation?.mentor?.name ?? "Belum ditentukan"}</p>
+              <p>
+                <span className="text-muted-foreground">Dokumen:</span>{" "}
+                <span className={`font-semibold ${completeness === 100 ? "text-emerald-600" : "text-amber-600"}`}>
+                  {completeness === 100 ? "COMPLETE" : "INCOMPLETE"}
+                </span>
+              </p>
+            </div>
           </SectionCard>
           {internMessage && <Alert type={internMessage.includes("berhasil") ? "success" : "error"} message={internMessage} />}
           <Button type="submit" disabled={internLoading} className="bg-blue-600 hover:bg-blue-700 text-white">{internLoading ? "Menyimpan..." : "Simpan Profil Intern"}</Button>
