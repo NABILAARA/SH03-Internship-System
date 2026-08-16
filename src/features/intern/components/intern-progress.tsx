@@ -130,28 +130,14 @@ export function InternProgress({ data }: Readonly<InternProgressProps>) {
         <h2 className="text-lg font-bold text-slate-800">Ringkasan Progress</h2>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-          {/* Big number */}
-          <div className="flex flex-col items-center justify-center bg-blue-50 rounded-2xl px-8 py-5 shrink-0">
-            <span className="text-5xl font-extrabold text-blue-600">{stats.avgProgress}%</span>
-            <span className="text-xs text-blue-400 font-semibold mt-1 uppercase tracking-wider">Rata-rata Progress</span>
+          {/* Big number — overall project progress terbaru */}
+          <div className="flex flex-col items-center justify-center bg-violet-50 rounded-2xl px-8 py-5 shrink-0">
+            <span className="text-5xl font-extrabold text-violet-600">{stats.latestProjectProgress}%</span>
+            <span className="text-xs text-violet-400 font-semibold mt-1 uppercase tracking-wider">Overall Progress</span>
           </div>
 
           <div className="flex-1 space-y-4">
-            {/* Average progress bar */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-semibold text-slate-600">
-                <span>Progress Rata-rata Logbook</span>
-                <span>{stats.avgProgress}%</span>
-              </div>
-              <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
-                <div
-                  className="h-4 rounded-full bg-blue-500 transition-all duration-700"
-                  style={{ width: `${stats.avgProgress}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Latest project overall progress */}
+            {/* Overall project progress bar */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs font-semibold text-slate-600">
                 <span>Estimasi Progress Keseluruhan Proyek</span>
