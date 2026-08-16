@@ -633,7 +633,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
           {/* Progress slider — tugas hari ini */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs font-semibold text-slate-700">
-              <label htmlFor="log-progress">Progress Tugas Hari Ini</label>
+              <label htmlFor="log-progress">Progress Tugas Harian</label>
               <span className="text-blue-600 font-bold">{progress}% Completed</span>
             </div>
             <input
@@ -712,7 +712,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
 
       {/* Logbook History */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-800">Riwayat Laporan Logbook</h2>
+        <h2 className="text-lg font-bold text-slate-800">Riwayat Logbook</h2>
 
         {logbooks.length === 0 ? (
           <div className="bg-white/50 border border-dashed border-slate-200 rounded-2xl p-12 text-center">
@@ -771,33 +771,17 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
                 <div className="space-y-3">
                   <p className="text-slate-700 text-sm whitespace-pre-wrap">{log.activity}</p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Progress tugas hari ini */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs text-slate-500">
-                        <span>Progress Tugas Hari Ini</span>
-                        <span className="font-bold text-slate-700">{log.progress}%</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${log.progress}%` }}
-                        />
-                      </div>
+                  {/* Progress keseluruhan proyek */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-slate-500">
+                      <span>Progress Keseluruhan Proyek</span>
+                      <span className="font-bold text-violet-600">{log.projectProgress}%</span>
                     </div>
-
-                    {/* Progress keseluruhan proyek */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs text-slate-500">
-                        <span>Progress Keseluruhan Proyek</span>
-                        <span className="font-bold text-violet-600">{log.projectProgress}%</span>
-                      </div>
-                      <div className="w-full bg-violet-100 rounded-full h-2">
-                        <div
-                          className="bg-violet-500 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${log.projectProgress}%` }}
-                        />
-                      </div>
+                    <div className="w-full bg-violet-100 rounded-full h-2">
+                      <div
+                        className="bg-violet-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${log.projectProgress}%` }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -890,7 +874,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-semibold text-slate-700">
-                    <label htmlFor="edit-progress">Progress Tugas Hari Ini</label>
+                    <label htmlFor="edit-progress">Progress Tugas Harian</label>
                     <span className="text-blue-600 font-bold">{editProgress}%</span>
                   </div>
                   <input
