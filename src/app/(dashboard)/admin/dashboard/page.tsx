@@ -17,6 +17,8 @@ const emptyData = {
   pendingApprovals: 0,
   totalMentors: 0,
   pendingLogbooks: 0,
+  internsWithoutMentor: 0,
+  internsNotEvaluated: 0,
   latestApplications: [],
   internChartData: [],
   programPieData: [],
