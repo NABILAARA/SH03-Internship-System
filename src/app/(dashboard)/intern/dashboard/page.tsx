@@ -44,6 +44,7 @@ export default async function InternDashboardPage() {
     userId ? prisma.certificate.findUnique({ where: { userId } }) : Promise.resolve(null),
     userId ? prisma.logbook.findMany({
       where: { userId }, take: 5, orderBy: { date: "desc" },
+      select: { id: true, date: true, activity: true, progress: true, projectProgress: true, status: true },
     }) : Promise.resolve([]),
     userId ? prisma.mentorIntern.findUnique({
       where: { internId: userId },
@@ -190,7 +191,7 @@ export default async function InternDashboardPage() {
                         )}
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {log.progress}% Progress
+                          {log.projectProgress}% Overall Project
                         </span>
                       </div>
                     </div>
