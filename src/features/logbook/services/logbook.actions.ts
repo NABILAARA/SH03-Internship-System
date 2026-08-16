@@ -17,6 +17,7 @@ export async function getInternLogbooks() {
 export async function createLogbookAction(formData: {
   activity: string;
   progress: number;
+  projectProgress: number;
   date?: string;
 }) {
   try {
@@ -37,12 +38,16 @@ export async function createLogbookAction(formData: {
     if (formData.progress === undefined || formData.progress < 0 || formData.progress > 100) {
       return { error: "Progress harus berada di antara 0% dan 100%." };
     }
+    if (formData.projectProgress === undefined || formData.projectProgress < 0 || formData.projectProgress > 100) {
+      return { error: "Progress proyek harus berada di antara 0% dan 100%." };
+    }
 
     await prisma.logbook.create({
       data: {
         userId: session.user.id,
         activity: formData.activity,
         progress: formData.progress,
+        projectProgress: formData.projectProgress,
         date: formData.date ? new Date(formData.date) : new Date(),
         status: "pending"
       }
@@ -79,6 +84,7 @@ export async function resubmitLogbookAction(formData: {
   logbookId: string;
   activity: string;
   progress: number;
+  projectProgress: number;
   date?: string;
 }) {
   try {
@@ -90,6 +96,9 @@ export async function resubmitLogbookAction(formData: {
     if (!formData.activity) return { error: "Detail aktivitas wajib diisi." };
     if (formData.progress < 0 || formData.progress > 100) {
       return { error: "Progress harus berada di antara 0% dan 100%." };
+    }
+    if (formData.projectProgress < 0 || formData.projectProgress > 100) {
+      return { error: "Progress proyek harus berada di antara 0% dan 100%." };
     }
 
     // Verify the logbook belongs to this user and is rejected
@@ -110,6 +119,7 @@ export async function resubmitLogbookAction(formData: {
       data: {
         activity: formData.activity,
         progress: formData.progress,
+        projectProgress: formData.projectProgress,
         date: formData.date ? new Date(formData.date) : logbook.date,
         status: "pending",
         feedback: null

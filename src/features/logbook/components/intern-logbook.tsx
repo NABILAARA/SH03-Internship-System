@@ -37,6 +37,7 @@ type LogbookEntry = {
   date: Date;
   activity: string;
   progress: number;
+  projectProgress: number;
   status: string;
   feedback: string | null;
 };
@@ -56,6 +57,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
   const [isAdding, setIsAdding] = useState(false);
   const [activity, setActivity] = useState("");
   const [progress, setProgress] = useState(50);
+  const [projectProgress, setProjectProgress] = useState(0);
   const [logDate, setLogDate] = useState(today);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +69,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
   // Save draft manual ke localStorage — tidak dikirim ke mentor
   const handleSaveDraft = () => {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ activity, progress, logDate }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ activity, progress, projectProgress, logDate }));
       setDraftSaved(true);
       setTimeout(() => setDraftSaved(false), 2500);
     } catch { /* ignore */ }
@@ -80,9 +82,10 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
       if (saved) {
-        const draft = JSON.parse(saved) as { activity?: string; progress?: number; logDate?: string };
+        const draft = JSON.parse(saved) as { activity?: string; progress?: number; projectProgress?: number; logDate?: string };
         if (draft.activity)  setActivity(draft.activity);
         if (draft.progress !== undefined) setProgress(draft.progress);
+        if (draft.projectProgress !== undefined) setProjectProgress(draft.projectProgress);
         if (draft.logDate)   setLogDate(draft.logDate);
       }
     } catch { /* ignore */ }
@@ -100,6 +103,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
   const [editingLog, setEditingLog]           = useState<LogbookEntry | null>(null);
   const [editActivity, setEditActivity]       = useState("");
   const [editProgress, setEditProgress]       = useState(50);
+  const [editProjectProgress, setEditProjectProgress] = useState(0);
   const [editDate, setEditDate]               = useState(today);
   const [editError, setEditError]             = useState<string | null>(null);
   const [editSuccess, setEditSuccess]         = useState(false);
@@ -136,7 +140,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
     setError(null);
 
     try {
-      const res = await createLogbookAction({ activity, progress, date: logDate });
+      const res = await createLogbookAction({ activity, progress, projectProgress, date: logDate });
       if (res.error) {
         setError(res.error);
       } else {
@@ -146,12 +150,14 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
           date: logDate ? new Date(logDate) : new Date(),
           activity,
           progress,
+          projectProgress,
           status: "pending",
           feedback: null
         };
         setLogbooks((prev) => [newLog, ...prev]);
         setActivity("");
         setProgress(50);
+        setProjectProgress(0);
         setLogDate(today);
         setIsAdding(false);
         resetGithub();
@@ -251,6 +257,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
     setIsAdding(false);
     setActivity("");
     setProgress(50);
+    setProjectProgress(0);
     setLogDate(today);
     resetGithub();
   };
@@ -259,6 +266,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
     setEditingLog(log);
     setEditActivity(log.activity);
     setEditProgress(log.progress);
+    setEditProjectProgress(log.projectProgress);
     setEditDate(new Date(log.date).toISOString().split("T")[0]);
     setEditError(null);
     setEditSuccess(false);
@@ -286,6 +294,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
         logbookId: editingLog.id,
         activity: editActivity,
         progress: editProgress,
+        projectProgress: editProjectProgress,
         date: editDate
       });
       if (res.error) {
@@ -295,7 +304,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
         setLogbooks((prev) =>
           prev.map((l) =>
             l.id === editingLog.id
-              ? { ...l, activity: editActivity, progress: editProgress, status: "pending", feedback: null, date: new Date(editDate) }
+              ? { ...l, activity: editActivity, progress: editProgress, projectProgress: editProjectProgress, status: "pending", feedback: null, date: new Date(editDate) }
               : l
           )
         );
@@ -621,7 +630,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
             />
           </div>
 
-          {/* Progress slider */}
+          {/* Progress slider — tugas hari ini */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs font-semibold text-slate-700">
               <label htmlFor="log-progress">Progress Tugas Hari Ini</label>
@@ -642,6 +651,34 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
               <span>50% (Setengah Jalan)</span>
               <span>100% (Selesai)</span>
             </div>
+          </div>
+
+          {/* Project Progress slider — estimasi keseluruhan proyek */}
+          <div className="space-y-1.5 rounded-xl border border-violet-100 bg-violet-50 p-4">
+            <div className="flex justify-between text-xs font-semibold text-slate-700">
+              <label htmlFor="log-project-progress">
+                Estimasi Progress Keseluruhan Proyek
+              </label>
+              <span className="text-violet-600 font-bold">{projectProgress}%</span>
+            </div>
+            <input
+              id="log-project-progress"
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={projectProgress}
+              onChange={(e) => setProjectProgress(Number(e.target.value))}
+              className="w-full h-2 bg-violet-100 rounded-lg appearance-none cursor-pointer accent-violet-600"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400 px-1">
+              <span>0%</span>
+              <span>50%</span>
+              <span>100% (Selesai Total)</span>
+            </div>
+            <p className="text-[11px] text-violet-600 mt-1">
+              Seberapa jauh pengerjaan <strong>keseluruhan proyek magang</strong> Anda saat ini? Ini terpisah dari progress tugas hari ini.
+            </p>
           </div>
 
           <div className="flex justify-end gap-2 border-t pt-4">
@@ -734,16 +771,33 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
                 <div className="space-y-3">
                   <p className="text-slate-700 text-sm whitespace-pre-wrap">{log.activity}</p>
 
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-slate-500">
-                      <span>Progress Pekerjaan</span>
-                      <span className="font-bold text-slate-700">{log.progress}%</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Progress tugas hari ini */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-slate-500">
+                        <span>Progress Tugas Hari Ini</span>
+                        <span className="font-bold text-slate-700">{log.progress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${log.progress}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${log.progress}%` }}
-                      />
+
+                    {/* Progress keseluruhan proyek */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-slate-500">
+                        <span>Progress Keseluruhan Proyek</span>
+                        <span className="font-bold text-violet-600">{log.projectProgress}%</span>
+                      </div>
+                      <div className="w-full bg-violet-100 rounded-full h-2">
+                        <div
+                          className="bg-violet-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${log.projectProgress}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -836,7 +890,7 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-semibold text-slate-700">
-                    <label htmlFor="edit-progress">Progress</label>
+                    <label htmlFor="edit-progress">Progress Tugas Hari Ini</label>
                     <span className="text-blue-600 font-bold">{editProgress}%</span>
                   </div>
                   <input
@@ -847,6 +901,24 @@ export function InternLogbook({ initialLogbooks, hasMentor, mentorName }: Readon
                     onChange={(e) => setEditProgress(Number(e.target.value))}
                     className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
                   />
+                </div>
+
+                <div className="space-y-1.5 rounded-xl border border-violet-100 bg-violet-50 p-4">
+                  <div className="flex justify-between text-xs font-semibold text-slate-700">
+                    <label htmlFor="edit-project-progress">Estimasi Progress Keseluruhan Proyek</label>
+                    <span className="text-violet-600 font-bold">{editProjectProgress}%</span>
+                  </div>
+                  <input
+                    id="edit-project-progress"
+                    type="range"
+                    min="0" max="100" step="5"
+                    value={editProjectProgress}
+                    onChange={(e) => setEditProjectProgress(Number(e.target.value))}
+                    className="w-full h-2 bg-violet-100 rounded-lg appearance-none cursor-pointer accent-violet-600"
+                  />
+                  <p className="text-[11px] text-violet-600">
+                    Seberapa jauh pengerjaan <strong>keseluruhan proyek magang</strong> Anda saat ini?
+                  </p>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">

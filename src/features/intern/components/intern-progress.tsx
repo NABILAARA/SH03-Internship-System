@@ -7,6 +7,7 @@ type LogbookEntry = {
   date: Date;
   activity: string;
   progress: number;
+  projectProgress: number;
   status: string;
   feedback: string | null;
 };
@@ -30,6 +31,7 @@ type ProgressData = {
     rejected: number;
     pending: number;
     avgProgress: number;
+    latestProjectProgress: number;
   };
 };
 
@@ -149,6 +151,23 @@ export function InternProgress({ data }: Readonly<InternProgressProps>) {
               </div>
             </div>
 
+            {/* Latest project overall progress */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs font-semibold text-slate-600">
+                <span>Estimasi Progress Keseluruhan Proyek</span>
+                <span className="text-violet-600">{stats.latestProjectProgress}%</span>
+              </div>
+              <div className="w-full bg-violet-100 h-4 rounded-full overflow-hidden">
+                <div
+                  className="h-4 rounded-full bg-violet-500 transition-all duration-700"
+                  style={{ width: `${stats.latestProjectProgress}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Berdasarkan laporan logbook terakhir yang dikirim.
+              </p>
+            </div>
+
             {/* Status breakdown bar */}
             {stats.total > 0 && (
               <div className="space-y-1.5">
@@ -212,14 +231,25 @@ export function InternProgress({ data }: Readonly<InternProgressProps>) {
                 {/* Activity */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-slate-700 line-clamp-2">{log.activity}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <div className="flex-1 max-w-[140px] bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                      <div
-                        className="h-1.5 bg-blue-500 rounded-full"
-                        style={{ width: `${log.progress}%` }}
-                      />
+                  <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="w-[120px] bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="h-1.5 bg-blue-500 rounded-full"
+                          style={{ width: `${log.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium">{log.progress}%</span>
                     </div>
-                    <span className="text-[11px] text-slate-500 font-medium">{log.progress}%</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-[120px] bg-violet-100 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="h-1.5 bg-violet-500 rounded-full"
+                          style={{ width: `${log.projectProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-violet-500 font-medium">{log.projectProgress}% proyek</span>
+                    </div>
                   </div>
                 </div>
 

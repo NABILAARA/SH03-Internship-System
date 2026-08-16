@@ -21,6 +21,7 @@ type LogbookEntry = {
   date: Date;
   activity: string;
   progress: number;
+  projectProgress: number;
   status: string;
   feedback: string | null;
   user: Intern;
@@ -243,6 +244,24 @@ export function MentorLogbookReview({ initialLogbooks }: Readonly<MentorLogbookR
                             className="h-full bg-blue-600 rounded-full transition-all duration-500"
                             style={{ width: `${log.progress}%` }}
                           />
+                        </div>
+                      </div>
+
+                      {/* Project overall progress */}
+                      <div className="space-y-1.5 pt-2 mt-2 border-t border-slate-100">
+                        <p className="text-[10px] font-bold text-violet-400 uppercase tracking-widest">
+                          Progress Keseluruhan Proyek
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2 bg-violet-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                              style={{ width: `${log.projectProgress}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-violet-600 shrink-0">
+                            {log.projectProgress}%
+                          </span>
                         </div>
                       </div>
                     </div>
