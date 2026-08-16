@@ -36,7 +36,7 @@ export default async function InternDashboardPage() {
     recentLogs, mentorAssignment, weeklyLogs,
   ] = await Promise.all([
     userId ? prisma.logbook.count({ where: { userId, status: "approved" } }) : Promise.resolve(0),
-    userId ? prisma.logbook.findMany({ where: { userId }, select: { projectProgress: true } }) : Promise.resolve([]),
+    userId ? prisma.logbook.findFirst({ where: { userId }, orderBy: { date: "desc" }, select: { projectProgress: true } }) : Promise.resolve(null),
     userId ? prisma.application.findFirst({
       where: { userId, status: "ACCEPTED" },
       include: { program: { select: { title: true, period: true } } },
@@ -59,10 +59,8 @@ export default async function InternDashboardPage() {
     }) : Promise.resolve(0),
   ]);
 
-  // Average Progress = rata-rata projectProgress (estimasi keseluruhan proyek) dari semua logbook
-  const averageProgress = allProgressLogs.length > 0
-    ? Math.round(allProgressLogs.reduce((acc, l) => acc + l.projectProgress, 0) / allProgressLogs.length)
-    : 0;
+  // Overall Progress = projectProgress dari logbook terakhir yang dikirim
+  const averageProgress = allProgressLogs?.projectProgress ?? 0;
 
   const STATUS_STYLE: Record<string, string> = {
     approved: "bg-emerald-50 text-emerald-600 border-emerald-200",
@@ -126,7 +124,7 @@ export default async function InternDashboardPage() {
             </div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">&nbsp;</span>
           </div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Average Progress</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Overall Progress</p>
           <p className="text-2xl font-bold text-slate-800 leading-tight mt-0.5">{averageProgress}%</p>
         </div>
 
