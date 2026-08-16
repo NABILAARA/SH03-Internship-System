@@ -36,7 +36,7 @@ export default async function InternDashboardPage() {
     recentLogs, mentorAssignment, weeklyLogs,
   ] = await Promise.all([
     userId ? prisma.logbook.count({ where: { userId, status: "approved" } }) : Promise.resolve(0),
-    userId ? prisma.logbook.findMany({ where: { userId }, select: { progress: true } }) : Promise.resolve([]),
+    userId ? prisma.logbook.findMany({ where: { userId }, select: { projectProgress: true } }) : Promise.resolve([]),
     userId ? prisma.application.findFirst({
       where: { userId, status: "ACCEPTED" },
       include: { program: { select: { title: true, period: true } } },
@@ -58,8 +58,9 @@ export default async function InternDashboardPage() {
     }) : Promise.resolve(0),
   ]);
 
+  // Average Progress = rata-rata projectProgress (estimasi keseluruhan proyek) dari semua logbook
   const averageProgress = allProgressLogs.length > 0
-    ? Math.round(allProgressLogs.reduce((acc, l) => acc + l.progress, 0) / allProgressLogs.length)
+    ? Math.round(allProgressLogs.reduce((acc, l) => acc + l.projectProgress, 0) / allProgressLogs.length)
     : 0;
 
   const STATUS_STYLE: Record<string, string> = {
