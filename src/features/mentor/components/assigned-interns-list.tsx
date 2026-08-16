@@ -14,6 +14,7 @@ type Logbook = {
   date: Date;
   activity: string;
   progress: number;
+  projectProgress: number;
   status: string;
 };
 
@@ -216,12 +217,12 @@ export function AssignedInternsList({ interns }: Readonly<AssignedInternsListPro
                               </span>
                               <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-blue-500 rounded-full transition-all"
-                                  style={{ width: `${log.progress}%` }}
+                                  className="h-full bg-violet-500 rounded-full transition-all"
+                                  style={{ width: `${log.projectProgress}%` }}
                                 />
                               </div>
-                              <span className="text-[10px] font-semibold text-slate-500 w-7 text-right shrink-0">
-                                {log.progress}%
+                              <span className="text-[10px] font-semibold text-violet-600 w-7 text-right shrink-0">
+                                {log.projectProgress}%
                               </span>
                             </div>
                           ))}
