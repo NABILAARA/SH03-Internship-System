@@ -95,12 +95,13 @@ export default async function MentorDashboardPage() {
             <Eye className="h-4 w-4" />
             View Mentees
           </Link>
-          <button
+          <Link
+            href="/mentor/announcements"
             className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 transition text-white text-sm font-semibold px-4 py-2 rounded-lg border border-white/20"
           >
             <Calendar className="h-4 w-4" />
             Schedule Sync
-          </button>
+          </Link>
         </div>
       </div>
 
