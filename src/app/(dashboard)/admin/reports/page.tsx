@@ -1,25 +1,33 @@
 import { createPageMetadata } from "@/utils/create-page-metadata";
-import { AdminReports } from "@/features/admin/components/admin-reports";
-import {
-  getPendingRegistrations,
-  getRegistrationHistory,
-} from "@/features/admin/services/registration-approval.actions";
+import { AdminReportsNew } from "@/features/admin/components/admin-reports-new";
+import { getReportsData } from "@/features/admin/services/reports.actions";
 
 export const metadata = createPageMetadata("Reports");
 
+const emptyData = {
+  summary: {
+    totalInterns: 0,
+    totalCertificates: 0,
+    totalLogbooks: 0,
+    totalMentors: 0,
+    completionRate: 0,
+  },
+  internStatus: { ongoing: 0, upcoming: 0, completed: 0 },
+  programSummary: [],
+  logbookSummary: { total: 0, approved: 0, pending: 0, rejected: 0, avgProjectProgress: 0 },
+  certificateList: [],
+  pendingRegistrations: [],
+  registrationHistory: [],
+};
+
 export default async function ReportsPage() {
-  const [pendingResult, historyResult] = await Promise.all([
-    getPendingRegistrations(),
-    getRegistrationHistory(),
-  ]);
-
-  const pendingUsers = pendingResult.data ?? [];
-  const historyUsers = "data" in historyResult ? historyResult.data ?? [] : [];
-
-  return (
-    <AdminReports
-      initialPending={pendingUsers}
-      initialHistory={historyUsers}
-    />
-  );
+  try {
+    const result = await getReportsData();
+    if ("error" in result || !result.data) {
+      return <AdminReportsNew {...emptyData} />;
+    }
+    return <AdminReportsNew {...result.data} />;
+  } catch {
+    return <AdminReportsNew {...emptyData} />;
+  }
 }
