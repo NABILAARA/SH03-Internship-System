@@ -453,3 +453,58 @@ npm run build
 
 **Last Updated:** 2026-08-15
 **Session Status:** Rate limiting Upstash Redis, projectProgress field + UI konsisten di seluruh sistem, dashboard fixes, profile fixes, Tasks & To Do real data — semua implemented dan verified.
+
+---
+
+## Session Update — 2026-08-17 (Lanjutan dari 2026-08-15)
+
+### Perubahan Tambahan
+
+#### 1. Monitoring Page — 4 Stat Cards
+- Halaman `/admin/monitoring` sekarang memiliki **4 stat card** di atas tabel logbook:
+  - Total Logbook, Pending Review, Approved, Rejected.
+- Data real-time dari DB, konsisten dengan filter tabel di bawahnya.
+- File: `src/features/admin/components/admin-monitoring.tsx`.
+
+#### 2. Reports Page — Dibangun Ulang dengan Data Real
+- Halaman `/admin/reports` sebelumnya berisi data hardcoded atau placeholder.
+- Sekarang menggunakan **`reports.actions.ts`** yang fetch data langsung dari DB:
+  - Summary cards: Total Intern, Completion Rate, Total Logbook, Sertifikat Terbit.
+  - Distribusi status intern: On Going, Upcoming, Completed (dengan progress bar).
+  - Ringkasan logbook: Approved, Pending, Rejected + rata-rata project progress.
+  - Tabel ringkasan per program: jumlah pelamar, diterima, ditolak, pending, seleksi.
+  - Tabel sertifikat diterbitkan: nomor sertifikat, nama intern, program, tanggal terbit + export CSV.
+  - Pending registrations: tabel dengan tombol Approve/Reject inline.
+  - Riwayat registrasi: filter, search, pagination, detail modal, export CSV.
+- Komponen baru: `admin-reports-new.tsx` (menggantikan `admin-reports.tsx` yang dihapus).
+- File lama `admin-reports.tsx` dihapus setelah digantikan sepenuhnya.
+
+#### 3. Konsistensi Count di Reports dengan Halaman Lain
+- **Total Intern** di Reports = `ongoing + upcoming + completed` — sama persis dengan halaman Interns.
+- **Total Lamaran** per program = `pending + accepted + rejected` — sama dengan halaman Applicants (tidak termasuk `IN_REVIEW` dan `INTERVIEW`).
+- Kolom **Seleksi** ditambahkan di tabel per program untuk menampilkan jumlah yang sedang dalam proses seleksi secara transparan.
+- `internOngoing/upcoming/completed` di-reuse untuk menghindari query ganda.
+
+#### 4. Cleanup
+- File `admin-reports.tsx` (versi lama dengan data hardcoded) dihapus dari codebase.
+- Label "Progress" diubah menjadi "Overall Progress" di beberapa tempat.
+- `tsconfig.json` — `jsx` diset ke `preserve` agar kompatibel dengan Next.js 15.
+
+---
+
+## Updated Key Implementation Files (2026-08-17)
+
+- `src/features/admin/services/reports.actions.ts` — server action baru, fetch semua data Reports dari DB.
+- `src/features/admin/components/admin-reports-new.tsx` — komponen Reports baru dengan 6 section real data.
+- `src/app/(dashboard)/admin/reports/page.tsx` — gunakan `getReportsData()` dan `AdminReportsNew`.
+- `src/features/admin/components/admin-monitoring.tsx` — 4 stat cards di atas tabel logbook.
+
+---
+
+## Known Issues / Perlu Diperhatikan
+
+- `reports.actions.ts` menggunakan `ApplicationStatus` enum dari Prisma (`PENDING`, `ACCEPTED`, `REJECTED`, `IN_REVIEW`, `INTERVIEW`) — **berbeda** dari string `"pending"/"approved"/"rejected"` yang dipakai di logbook dan beberapa action lain. Pastikan konsistensi saat menambah fitur terkait Application.
+- Kolom `projectProgress` belum terhubung ke tampilan Reports (hanya dipakai di logbook review dan progress intern).
+
+**Last Updated:** 2026-08-17
+**Session Status:** Reports page dibangun ulang dengan data real, 4 stat cards di monitoring, konsistensi count diperbaiki — semua implemented dan verified.

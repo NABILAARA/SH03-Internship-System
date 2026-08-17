@@ -230,7 +230,7 @@ export function AdminReportsNew({
           <div>
             <p className="text-xs text-slate-500 font-medium">Total Intern</p>
             <p className="text-2xl font-bold text-slate-800 leading-tight">{summary.totalInterns}</p>
-            <p className="text-xs text-slate-400 mt-0.5">ongoing + upcoming + completed</p>
+            <p className="text-xs text-slate-400 mt-0.5">{summary.totalMentors} Mentor aktif</p>
           </div>
         </div>
 
