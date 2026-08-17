@@ -26,15 +26,6 @@ interface ProgramSummary {
   inReview: number;
 }
 
-interface MentorItem {
-  id: string;
-  name: string;
-  email: string;
-  totalInterns: number;
-  activeInterns: number;
-  completedInterns: number;
-}
-
 interface CertificateItem {
   id: string;
   certNumber: string;
@@ -83,7 +74,6 @@ interface AdminReportsNewProps {
     avgProjectProgress: number;
   };
   certificateList: CertificateItem[];
-  mentorData: MentorItem[];
   pendingRegistrations: PendingUser[];
   registrationHistory: HistoryUser[];
 }
@@ -125,7 +115,6 @@ export function AdminReportsNew({
   programSummary,
   logbookSummary,
   certificateList,
-  mentorData,
   pendingRegistrations: initialPending,
   registrationHistory,
 }: Readonly<AdminReportsNewProps>) {
@@ -376,56 +365,6 @@ export function AdminReportsNew({
                     <td className="px-5 py-3.5 text-sm font-bold text-rose-500">{p.rejected}</td>
                     <td className="px-5 py-3.5 text-sm font-bold text-amber-500">{p.pending}</td>
                     <td className="px-5 py-3.5 text-sm font-bold text-blue-500">{p.inReview}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* ── Section 3.5: Mentor Aktif ── */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <h2 className="text-base font-bold text-slate-800">Mentor Aktif</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {mentorData.length} mentor terdaftar — jumlah intern yang dibimbing tiap mentor.
-          </p>
-        </div>
-        {mentorData.length === 0 ? (
-          <div className="py-10 text-center text-sm text-slate-400">Belum ada mentor terdaftar.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60">
-                  {["Mentor", "Total Intern", "On Going", "Completed"].map(h => (
-                    <th key={h} className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {mentorData.map(m => (
-                  <tr key={m.id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-[10px] font-bold ${avatarColor(m.name)}`}>
-                          {initials(m.name)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 truncate">{m.name}</p>
-                          <p className="text-xs text-slate-400 truncate">{m.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-sm font-bold text-slate-700">{m.totalInterns}</span>
-                      {m.totalInterns === 0 && (
-                        <span className="ml-2 text-[10px] text-slate-400 italic">belum ada intern</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm font-bold text-emerald-600">{m.activeInterns}</td>
-                    <td className="px-5 py-3.5 text-sm font-bold text-violet-600">{m.completedInterns}</td>
                   </tr>
                 ))}
               </tbody>
