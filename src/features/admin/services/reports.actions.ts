@@ -11,7 +11,30 @@ export async function getReportsData() {
     }
 
     // ── Summary counts ──────────────────────────────────────────────────────
-    const totalInterns      = await prisma.user.count({ where: { role: "INTERN", approvalStatus: "APPROVED" } });
+    // totalInterns = ongoing + upcoming + completed
+    // Konsisten dengan halaman Interns (hanya intern dengan application ACCEPTED)
+    const [internCompleted, internOngoing, internUpcoming] = await Promise.all([
+      prisma.user.count({
+        where: { role: "INTERN", approvalStatus: "APPROVED", certificate: { isNot: null } }
+      }),
+      prisma.user.count({
+        where: {
+          role: "INTERN", approvalStatus: "APPROVED",
+          applications: { some: { status: "ACCEPTED" } },
+          certificate: null,
+          internRelation: { isNot: null },
+        }
+      }),
+      prisma.user.count({
+        where: {
+          role: "INTERN", approvalStatus: "APPROVED",
+          applications: { some: { status: "ACCEPTED" } },
+          certificate: null,
+          internRelation: null,
+        }
+      }),
+    ]);
+    const totalInterns = internOngoing + internUpcoming + internCompleted;
     const totalCertificates = await prisma.certificate.count();
     const totalLogbooks     = await prisma.logbook.count();
     const totalMentors      = await prisma.user.count({ where: { role: "MENTOR", approvalStatus: "APPROVED" } });
@@ -21,26 +44,10 @@ export async function getReportsData() {
       ? Math.round((totalCertificates / totalInterns) * 100)
       : 0;
 
-    // ── Distribusi status intern ─────────────────────────────────────────────
-    const completed = await prisma.user.count({
-      where: { role: "INTERN", approvalStatus: "APPROVED", certificate: { isNot: null } }
-    });
-    const ongoing = await prisma.user.count({
-      where: {
-        role: "INTERN", approvalStatus: "APPROVED",
-        applications: { some: { status: "ACCEPTED" } },
-        certificate: null,
-        internRelation: { isNot: null },
-      }
-    });
-    const upcoming = await prisma.user.count({
-      where: {
-        role: "INTERN", approvalStatus: "APPROVED",
-        applications: { some: { status: "ACCEPTED" } },
-        certificate: null,
-        internRelation: null,
-      }
-    });
+    // ── Distribusi status intern (reuse dari summary) ────────────────────────
+    const completed = internCompleted;
+    const ongoing   = internOngoing;
+    const upcoming  = internUpcoming;
 
     // ── Ringkasan per program ────────────────────────────────────────────────
     const programs = await prisma.internshipProgram.findMany({
