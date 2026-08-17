@@ -23,6 +23,7 @@ interface ProgramSummary {
   accepted: number;
   rejected: number;
   pending: number;
+  inReview: number;
 }
 
 interface CertificateItem {
@@ -338,7 +339,7 @@ export function AdminReportsNew({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/60">
-                  {["Program", "Periode", "Status", "Pelamar", "Diterima", "Ditolak", "Pending"].map(h => (
+                  {["Program", "Periode", "Status", "Pelamar", "Diterima", "Ditolak", "Pending", "Seleksi"].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">{h}</th>
                   ))}
                 </tr>
@@ -363,6 +364,7 @@ export function AdminReportsNew({
                     <td className="px-5 py-3.5 text-sm font-bold text-emerald-600">{p.accepted}</td>
                     <td className="px-5 py-3.5 text-sm font-bold text-rose-500">{p.rejected}</td>
                     <td className="px-5 py-3.5 text-sm font-bold text-amber-500">{p.pending}</td>
+                    <td className="px-5 py-3.5 text-sm font-bold text-blue-500">{p.inReview}</td>
                   </tr>
                 ))}
               </tbody>

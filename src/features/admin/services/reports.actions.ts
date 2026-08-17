@@ -65,9 +65,11 @@ export async function getReportsData() {
 
     const programSummary = programs.map(p => {
       const accepted = p.applications.filter(a => a.status === "ACCEPTED").length;
-      const rejected = p.applications.filter(a => a.status === "REJECTED").length;
-      const pending  = p.applications.filter(a => ["PENDING", "IN_REVIEW", "INTERVIEW"].includes(a.status)).length;
-      // totalApplicants = pending + accepted + rejected (konsisten dengan halaman Applicants)
+      const rejected = p.applications.filter(a => ["REJECTED", "WITHDRAWN"].includes(a.status)).length;
+      const pending  = p.applications.filter(a => a.status === "PENDING").length;
+      const inReview = p.applications.filter(a => ["IN_REVIEW", "INTERVIEW"].includes(a.status)).length;
+      // totalApplicants = pending + accepted + rejected (konsisten dengan card Total Applications di halaman Applicants)
+      // IN_REVIEW dan INTERVIEW tidak dimasukkan karena halaman Applicants juga tidak menghitungnya di total
       const totalApplicants = pending + accepted + rejected;
       return {
         id: p.id,
@@ -78,6 +80,7 @@ export async function getReportsData() {
         accepted,
         rejected,
         pending,
+        inReview,
       };
     });
 
