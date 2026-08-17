@@ -103,6 +103,38 @@ export async function getReportsData() {
         )
       : 0;
 
+    // ── Mentor aktif & jumlah intern yang dibimbing ──────────────────────────
+    const mentorList = await prisma.user.findMany({
+      where: { role: "MENTOR", approvalStatus: "APPROVED" },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        mentorRelations: {
+          select: {
+            intern: {
+              select: {
+                id: true,
+                name: true,
+                internshipPosition: true,
+                certificate: { select: { id: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const mentorData = mentorList.map(m => ({
+      id: m.id,
+      name: m.name ?? "—",
+      email: m.email,
+      totalInterns: m.mentorRelations.length,
+      activeInterns: m.mentorRelations.filter(r => !r.intern.certificate).length,
+      completedInterns: m.mentorRelations.filter(r => !!r.intern.certificate).length,
+    }));
+
     // ── Sertifikat diterbitkan ───────────────────────────────────────────────
     const certificates = await prisma.certificate.findMany({
       orderBy: { issuedAt: "desc" },
@@ -175,6 +207,7 @@ export async function getReportsData() {
           avgProjectProgress,
         },
         certificateList,
+        mentorData,
         pendingRegistrations,
         registrationHistory,
       },
