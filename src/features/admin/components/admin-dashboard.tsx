@@ -348,10 +348,10 @@ export function AdminDashboard({ initialData }: Readonly<{ initialData: Dashboar
             </div>
             {(() => {
               const tasks = [
-                { task: "Review pending applications", count: data.pendingApprovals,      href: "/admin/applicants" },
-                { task: "Review pending logbooks",     count: data.pendingLogbooks,       href: "/admin/monitoring" },
-                { task: "Assign mentor to interns",    count: data.internsWithoutMentor,  href: "/admin/interns"    },
-                { task: "Interns not yet evaluated",   count: data.internsNotEvaluated,   href: "/admin/interns"    },
+                { task: "Approve pending registrations", count: data.pendingApprovals,      href: "/admin/reports"    },
+                { task: "Review pending logbooks",       count: data.pendingLogbooks,       href: "/admin/monitoring" },
+                { task: "Assign mentor to interns",      count: data.internsWithoutMentor,  href: "/admin/interns"    },
+                { task: "Interns not yet evaluated",     count: data.internsNotEvaluated,   href: "/admin/interns"    },
               ].filter((t) => t.count > 0);
 
               if (tasks.length === 0) {
