@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   Search, Plus, X, Users2, Star, BookOpen,
-  Trash2, Loader2, Mail, Briefcase, UserCheck,
+  Trash2, Loader2, Mail, UserCheck,
 } from "lucide-react";
 import { getUsersByRole, deleteUser, addMentorByAdminAction } from "../services/user-management.actions";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,12 @@ interface Mentor {
   approvalStatus: string;
   createdAt: Date;
   approvedAt: Date | null;
-  applications?: { id: string; status: string; program: { title: string } }[];
-  assignedInterns?: { id: string; name: string | null; email: string }[];
+  assignedInterns?: {
+    id: string;
+    name: string | null;
+    email: string;
+    applications?: { status: string; program: { title: string } }[];
+  }[];
   certificate?: { certNumber: string; issuedAt: Date } | null;
 }
 
@@ -76,8 +80,15 @@ export function MentorListContainer({
     const total = mentors.length;
     const totalInterns = mentors.reduce((acc, m) => acc + (m.assignedInterns?.length ?? 0), 0);
     const avgPerMentor = total > 0 ? (totalInterns / total).toFixed(1) : "0";
+    // Programs Covered = jumlah program unik dari intern yang aktif (ACCEPTED) di semua mentor
     const programsCovered = new Set(
-      mentors.flatMap(m => m.applications?.map(a => a.program.title) ?? [])
+      mentors.flatMap(m =>
+        (m.assignedInterns ?? []).flatMap(intern =>
+          (intern.applications ?? [])
+            .filter(a => a.status === "ACCEPTED")
+            .map(a => a.program.title)
+        )
+      )
     ).size;
     return { total, totalInterns, avgPerMentor, programsCovered };
   }, [mentors]);
@@ -230,7 +241,6 @@ export function MentorListContainer({
               const color  = avatarColor(name);
               const ini    = initials(mentor.name);
               const internCount = mentor.assignedInterns?.length ?? 0;
-              const program = mentor.applications?.[0]?.program.title ?? null;
               const isDeleting = deletingId === mentor.id;
 
               return (
@@ -264,14 +274,8 @@ export function MentorListContainer({
                     </div>
                   </div>
 
-                  {/* Program & Email */}
+                  {/* Email */}
                   <div className="space-y-1.5 mb-4">
-                    {program && (
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Briefcase className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{program}</span>
-                      </div>
-                    )}
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                       <span className="truncate">{mentor.email}</span>
