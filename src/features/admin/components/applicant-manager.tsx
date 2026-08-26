@@ -50,7 +50,20 @@ type Application = {
   createdAt: Date;
   user: User;
   program: Program;
-  selectionSessions?: { id: string; title: string; type: string; scheduledAt: Date; method: string; status: string; score: number | null; resultNotes: string | null; notes: string | null }[];
+  selectionSessions?: {
+    id: string;
+    title: string;
+    type: string;
+    scheduledAt: Date;
+    method: string;
+    location: string | null;
+    meetingLink: string | null;
+    interviewerName: string | null;
+    status: string;
+    score: number | null;
+    resultNotes: string | null;
+    notes: string | null;
+  }[];
 };
 
 type ApplicantManagerProps = {
@@ -182,10 +195,13 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                   type: selectionForm.type,
                   scheduledAt: new Date(selectionForm.scheduledAt),
                   method: selectionForm.method,
+                  location: selectionForm.method === "OFFLINE" ? selectionForm.location : null,
+                  meetingLink: selectionForm.method === "ONLINE" ? selectionForm.meetingLink : null,
+                  interviewerName: selectionForm.interviewerName || null,
                   status: "SCHEDULED",
                   score: null,
                   resultNotes: null,
-                  notes: selectionForm.notes
+                  notes: selectionForm.notes || null
                 }
               ]
             }
@@ -632,15 +648,87 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                 </div>
                 <div className="p-4">
                   {detailApp.selectionSessions?.length ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {detailApp.selectionSessions.map(item => (
-                        <div key={item.id} className="rounded-xl bg-slate-50 p-3 text-sm">
-                          <p className="font-semibold text-slate-700">{item.title}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {item.type} · {new Date(item.scheduledAt).toLocaleString("id-ID")} · {item.status}
-                          </p>
-                          {item.score != null && <p className="text-xs text-slate-600 mt-0.5">Skor: {item.score}</p>}
-                          {item.resultNotes && <p className="text-xs text-slate-600 mt-0.5">{item.resultNotes}</p>}
+                        <div key={item.id} className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-2">
+                          {/* Header: judul + status badge */}
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-semibold text-slate-800 text-sm">{item.title}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                {item.type.replace(/_/g, " ")} &middot;{" "}
+                                {new Date(item.scheduledAt).toLocaleString("id-ID", {
+                                  day: "numeric", month: "long", year: "numeric",
+                                  hour: "2-digit", minute: "2-digit"
+                                })}
+                              </p>
+                            </div>
+                            <span className={`shrink-0 inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              item.status === "COMPLETED"   ? "bg-emerald-100 text-emerald-700"
+                              : item.status === "CANCELLED" ? "bg-red-100 text-red-600"
+                              : item.status === "RESCHEDULED" ? "bg-amber-100 text-amber-600"
+                              : "bg-blue-100 text-blue-600"
+                            }`}>
+                              {item.status.replace(/_/g, " ")}
+                            </span>
+                          </div>
+
+                          {/* Info grid: metode, lokasi/link, pewawancara */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            <div>
+                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Metode</p>
+                              <p className="text-xs font-medium text-slate-700">{item.method}</p>
+                            </div>
+
+                            {item.method === "ONLINE" && item.meetingLink ? (
+                              <div>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Link Meeting</p>
+                                <a
+                                  href={item.meetingLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs text-blue-600 hover:underline font-medium truncate block"
+                                >
+                                  {item.meetingLink}
+                                </a>
+                              </div>
+                            ) : item.method === "OFFLINE" && item.location ? (
+                              <div>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Lokasi</p>
+                                <p className="text-xs font-medium text-slate-700">{item.location}</p>
+                              </div>
+                            ) : null}
+
+                            {item.interviewerName && (
+                              <div>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Pewawancara</p>
+                                <p className="text-xs font-medium text-slate-700">{item.interviewerName}</p>
+                              </div>
+                            )}
+
+                            {item.score != null && (
+                              <div>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Skor</p>
+                                <p className="text-xs font-bold text-blue-700">{item.score}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Catatan sesi */}
+                          {item.notes && (
+                            <div className="pt-1 border-t border-slate-100">
+                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Catatan</p>
+                              <p className="text-xs text-slate-600">{item.notes}</p>
+                            </div>
+                          )}
+
+                          {/* Hasil/result notes */}
+                          {item.resultNotes && (
+                            <div className="pt-1 border-t border-slate-100">
+                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Hasil</p>
+                              <p className="text-xs text-slate-600">{item.resultNotes}</p>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
