@@ -89,7 +89,19 @@ export async function getUsersByRole(role: UserRole) {
         mentorRelations: {
           include: {
             intern: {
-              select: { id: true, name: true, email: true }
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                applications: {
+                  where: { status: "ACCEPTED" },
+                  select: {
+                    status: true,
+                    program: { select: { title: true } }
+                  },
+                  take: 1
+                }
+              }
             }
           }
         }
