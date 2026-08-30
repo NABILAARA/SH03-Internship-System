@@ -635,3 +635,76 @@ Ketika admin membuat sesi seleksi baru untuk applicant di `/admin/applicants`, s
 
 **Last Updated:** 2026-08-17 (Sesi Terakhir)
 **Session Status:** Email notifikasi sesi seleksi implemented dan verified via SMTP Gmail.
+
+---
+
+## Session Update — 2026-08-30
+
+### Perubahan: Interns Overview Chart — Filter Rentang Waktu Interaktif
+
+#### Latar Belakang
+Grafik "Interns Overview" di `/admin/dashboard` sebelumnya menggunakan rentang waktu statis hardcoded (`20 Jun – 20 Oct 2026`) dan menghitung data dari `application.updatedAt` — bukan dari tanggal intern mulai magang yang sesungguhnya.
+
+#### Apa yang Diubah
+
+**1. Server Action Baru — `getInternsOverviewChartData`**
+- Ditambahkan di `src/features/admin/services/dashboard.actions.ts` (append, tidak mengganti `getDashboardStats`).
+- Menerima `ChartRangeInput` — preset (`7d`, `30d`, `3m`, `6m`, `1y`, `all`, `custom`) atau custom date range.
+- Tanggal mulai intern = `application.createdAt` (konsisten dengan logika di `/admin/interns`).
+- Status intern ditentukan dari data DB saat ini:
+  - **Completed** = user memiliki `certificate`
+  - **On Going** = user memiliki ACCEPTED application + `internRelation` (mentor di-assign)
+  - **Upcoming** = dikecualikan dari grafik (hanya On Going + Completed yang ditampilkan)
+- Granularitas otomatis berdasarkan rentang:
+  - ≤ 31 hari → per hari
+  - > 31 hari sampai ≤ 180 hari → per minggu
+  - > 180 hari → per bulan
+- Timezone konsisten dengan WIB (UTC+7) untuk semua kalkulasi tanggal.
+- Satu query Prisma yang efisien — tidak ada N+1, filtering dan aggregation dilakukan di server.
+- Mengembalikan `InternChartPoint[] { date, onGoing, completed }` + `rangeLabel`.
+- Tipe yang diekspor: `ChartRangePreset`, `ChartRangeInput`, `InternChartPoint`, `InternOverviewChartResult`.
+
+**2. Komponen Baru — `InternsOverviewChart`**
+- File baru: `src/features/admin/components/interns-overview-chart.tsx`
+- Client component, self-contained — mengelola state dan fetch sendiri (tidak bergantung pada polling interval 5 detik milik `AdminDashboard`).
+- Default preset: **Last 6 Months** — data langsung tampil saat halaman dibuka.
+- Dropdown filter dengan 7 pilihan: Last 7 Days, Last 30 Days, Last 3 Months, Last 6 Months, Last 1 Year, All Time, Custom Range.
+- Custom Range: 2 date input (Start Date, End Date) dengan validasi `start ≤ end`, tombol Apply, dan pesan error inline.
+- **Loading state**: skeleton `animate-pulse` — tidak ada layout shift.
+- **Empty state**: pesan "No intern data available for this period." — tidak ada data dummy.
+- **Error state**: pesan error dari server ditampilkan.
+- `AreaChart` dengan styling konsisten dengan chart lama: blue (On Going) + green (Completed), gradient fill, same font sizes.
+- Gradient IDs menggunakan prefix `io` (`ioColorOnGoing`, `ioColorCompleted`) agar tidak konflik dengan chart lain.
+- `XAxis interval="preserveStartEnd"` — label tidak bertumpuk.
+- Dropdown ditutup otomatis saat klik di luar area (mousedown listener).
+
+**3. Integrasi ke `AdminDashboard`**
+- `src/features/admin/components/admin-dashboard.tsx` diperbarui:
+  - Import `AreaChart`, `Area`, `XAxis`, `YAxis`, `CartesianGrid` dari recharts dihapus (tidak dipakai lagi).
+  - Import `InternsOverviewChart` ditambahkan.
+  - Blok card chart statis lama (hardcoded date range + static data) diganti dengan `<InternsOverviewChart />`.
+  - Helper `ChartTooltip` lokal dihapus (sekarang ada di dalam `interns-overview-chart.tsx`).
+  - `ChartPoint` interface dan `internChartData` di `DashboardData` tetap ada untuk backward compatibility dengan return type `getDashboardStats`.
+  - Semua bagian lain dashboard (stat cards, pie chart, Recent Applications, Tasks & To Do, sidebar) **tidak diubah**.
+
+#### Tidak Ada Perubahan Schema/Migration
+Fitur ini tidak memerlukan perubahan database. Data diambil dari tabel `Application`, `User`, `Certificate`, dan `MentorIntern` yang sudah ada.
+
+---
+
+## Updated Key Implementation Files (2026-08-30)
+
+- `src/features/admin/services/dashboard.actions.ts` — tambah `getInternsOverviewChartData` + exported types (`ChartRangePreset`, `ChartRangeInput`, `InternChartPoint`, `InternOverviewChartResult`).
+- `src/features/admin/components/interns-overview-chart.tsx` — komponen chart baru (new file).
+- `src/features/admin/components/admin-dashboard.tsx` — ganti static chart dengan `<InternsOverviewChart />`.
+
+---
+
+## Verification (2026-08-30)
+
+- `npx tsc --noEmit` — ✅ exit 0, no errors.
+- `npm run build` — ✅ exit 0, compiled successfully, 35 pages generated.
+- `git push` — ✅ commit `498d21c` pushed to `main`.
+
+**Last Updated:** 2026-08-30
+**Session Status:** Interns Overview chart upgraded — interactive time-range filter, server-side aggregation, correct start-date logic, WIB timezone, dynamic granularity, loading/empty/error states — implemented, verified, and pushed.
