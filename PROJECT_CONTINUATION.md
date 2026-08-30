@@ -508,3 +508,80 @@ npm run build
 
 **Last Updated:** 2026-08-17
 **Session Status:** Reports page dibangun ulang dengan data real, 4 stat cards di monitoring, konsistensi count diperbaiki — semua implemented dan verified.
+
+---
+
+## Session Update — 2026-08-17 (Sesi Lanjutan)
+
+### Perubahan dari commit `5153ee2` hingga `b3b13c8`
+
+#### 1. Fix: Programs Covered Count di Halaman Mentors
+- Card **"Programs Covered"** di halaman `/admin/mentors` sebelumnya selalu menampilkan `0` karena menghitung dari `mentor.applications` — field yang tidak relevan untuk role mentor.
+- Sekarang dihitung dari program unik milik intern-intern yang aktif (`ACCEPTED`) yang di-assign ke semua mentor.
+- `getUsersByRole` untuk role `MENTOR` sekarang include `applications` dari setiap intern (filter `status: "ACCEPTED"`, ambil `program.title`).
+- File: `src/features/admin/components/mentor-list-container.tsx`, `src/features/admin/services/user-management.actions.ts`.
+
+#### 2. Feat: Info Lengkap Sesi Seleksi di Detail Modal Applicants
+- Section **Riwayat Seleksi** di detail modal `/admin/applicants` sebelumnya hanya tampil judul, tipe, tanggal, status, skor, dan result notes.
+- Sekarang menampilkan informasi lengkap per sesi:
+  - Status badge berwarna (Scheduled biru, Completed hijau, Cancelled merah, Rescheduled amber).
+  - **Metode** (Online/Offline).
+  - **Link Meeting** yang bisa diklik (kalau Online) — atau **Lokasi** (kalau Offline).
+  - **Nama Pewawancara**.
+  - **Catatan** sesi dan **Hasil** / result notes.
+- Optimistic update saat tambah sesi baru juga diperbarui untuk include field `location`, `meetingLink`, `interviewerName`.
+- File: `src/features/admin/components/applicant-manager.tsx`.
+
+#### 3. Fix: Task To Do — Label dan Link Pending Registrations
+- Task "Review pending applications" di panel **Tasks & To Do** dashboard admin:
+  - Label diubah menjadi **"Approve pending registrations"** — lebih akurat karena ini tentang approval akun, bukan review lamaran program.
+  - Link diubah dari `/admin/applicants` → **`/admin/reports`** — sesuai halaman yang handle approval registrasi akun.
+- File: `src/features/admin/components/admin-dashboard.tsx`.
+
+#### 4. Feat: Fitur Lupa Password dengan Email SMTP
+- Flow lengkap reset password via email:
+  1. Halaman `/forgot-password` — input email, kirim request reset.
+  2. Email dikirim via SMTP dengan link `{APP_URL}/reset-password/{token}`, berlaku **1 jam**.
+  3. Halaman `/reset-password/[token]` — validasi token on mount, form password baru dengan show/hide toggle + indikator match, auto redirect ke `/login` setelah sukses.
+- **Keamanan:** anti email enumeration (selalu return success), token lama diinvalidate saat request baru, token sekali pakai (`used: true`), transaksi atomic update password + invalidate token.
+- Model baru: `PasswordResetToken` di Prisma schema.
+- Migration baru: `20260817000000_add_password_reset_token` — applied ke Supabase.
+- Link **"Lupa password?"** ditambahkan di bawah tombol submit pada halaman login (hanya tampil di mode login).
+- Route `/forgot-password` dan `/reset-password` ditambahkan ke allowed public paths di `lib/auth/config.ts`.
+- File:
+  - `prisma/schema.prisma` — model `PasswordResetToken` + relasi ke `User`.
+  - `prisma/migrations/20260817000000_add_password_reset_token/migration.sql`
+  - `src/features/auth/services/forgot-password.actions.ts` — 3 server actions: `forgotPasswordAction`, `validateResetTokenAction`, `resetPasswordAction`.
+  - `src/services/email.ts` — fungsi `sendPasswordResetEmail`.
+  - `src/app/(public)/forgot-password/page.tsx`
+  - `src/app/(public)/reset-password/[token]/page.tsx`
+  - `src/features/auth/components/auth-card.tsx` — tambah link "Lupa password?".
+  - `src/lib/auth/config.ts` — tambah allowed public paths.
+
+---
+
+## Environment Variables Wajib (Tambahan)
+
+```env
+NEXT_PUBLIC_APP_URL="https://your-domain.com"  # atau http://localhost:3000 untuk lokal
+```
+
+Wajib di-set agar link reset password di email mengarah ke URL yang benar.
+
+---
+
+## Updated Key Implementation Files (Sesi Lanjutan 2026-08-17)
+
+- `src/features/admin/components/mentor-list-container.tsx` — programs covered dari intern aktif.
+- `src/features/admin/services/user-management.actions.ts` — include applications intern dalam mentorRelations.
+- `src/features/admin/components/applicant-manager.tsx` — detail sesi seleksi lengkap.
+- `src/features/admin/components/admin-dashboard.tsx` — label dan link task approval diperbaiki.
+- `src/features/auth/services/forgot-password.actions.ts` — 3 server actions lupa password.
+- `src/services/email.ts` — template email reset password.
+- `src/app/(public)/forgot-password/page.tsx` — halaman request reset.
+- `src/app/(public)/reset-password/[token]/page.tsx` — halaman set password baru.
+- `src/features/auth/components/auth-card.tsx` — link lupa password di login.
+- `src/lib/auth/config.ts` — public paths untuk forgot/reset password.
+
+**Last Updated:** 2026-08-17 (Sesi Lanjutan)
+**Session Status:** Programs covered fix, selection session detail lengkap, task todo link fix, fitur lupa password via SMTP — semua implemented, tested, dan verified.
