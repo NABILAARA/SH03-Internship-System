@@ -111,6 +111,7 @@ model User {
   internEvaluation Evaluation?    @relation("InternEvaluation")
   mentorEvaluations Evaluation[]   @relation("MentorEvaluation")
   announcements    Announcement[] @relation("AnnouncementAuthor")
+  passwordResetTokens PasswordResetToken[]
 }
 
 
@@ -265,4 +266,17 @@ model Announcement {
   updatedAt DateTime  @updatedAt
 
   author User @relation("AnnouncementAuthor", fields: [createdBy], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
 }

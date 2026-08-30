@@ -198,6 +198,17 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
               "Daftar Akun"
             )}
           </Button>
+
+          {isLogin && (
+            <div className="text-center">
+              <Link
+                href="/forgot-password"
+                className="text-xs text-slate-500 hover:text-blue-600 transition font-medium"
+              >
+                Lupa password?
+              </Link>
+            </div>
+          )}
         </form>
 
         <div className="mt-8 text-center border-t border-slate-100 pt-6">

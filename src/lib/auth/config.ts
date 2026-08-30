@@ -41,7 +41,13 @@ export const authConfig = {
       const pathname = request.nextUrl.pathname;
 
       // Allow public pages
-      if (pathname === "/login" || pathname === "/register" || pathname === "/internship-information") {
+      if (
+        pathname === "/login" ||
+        pathname === "/register" ||
+        pathname === "/internship-information" ||
+        pathname === "/forgot-password" ||
+        pathname.startsWith("/reset-password")
+      ) {
         return true;
       }
 
