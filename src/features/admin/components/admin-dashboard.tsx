@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
 } from "recharts";
+import { InternsOverviewChart } from "./interns-overview-chart";
 
 /* ─── Types ─────────────────────────────────────── */
 interface Application {
@@ -78,23 +78,6 @@ function StatCard({ label, value, icon, iconBg, href }: Readonly<StatCardProps>)
         <p className="text-lg font-extrabold text-slate-800 leading-tight">{value}</p>
       </div>
     </Link>
-  );
-}
-
-/* ─── Chart Tooltip ──────────────────────────── */
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-slate-100 bg-white px-3 py-2 shadow-lg text-xs">
-      <p className="mb-1 font-bold text-slate-700">{label}</p>
-      {payload.map((p) => (
-        <div key={p.name} className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: p.color }} />
-          <span className="text-slate-500">{p.name}:</span>
-          <span className="font-bold text-slate-800">{p.value}</span>
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -167,35 +150,8 @@ export function AdminDashboard({ initialData }: Readonly<{ initialData: Dashboar
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
-            {/* Area Chart */}
-            <div className="lg:col-span-2 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-800">Interns Overview</h2>
-                <span className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500">20 Jun – 20 Oct 2026</span>
-              </div>
-              <div className="mb-3 flex items-center gap-3 text-[10px] font-semibold">
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500" />On Going</span>
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-400" />Completed</span>
-              </div>
-              <ResponsiveContainer width="100%" height={155}>
-                <AreaChart data={data.internChartData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorOnGoing" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="onGoing" name="On Going" stroke="#3b82f6" strokeWidth={2} fill="url(#colorOnGoing)" dot={{ r: 2, fill: "#3b82f6", strokeWidth: 0 }} activeDot={{ r: 4 }} />
-                  <Area type="monotone" dataKey="completed" name="Completed" stroke="#10b981" strokeWidth={2} fill="url(#colorCompleted)" dot={{ r: 2, fill: "#10b981", strokeWidth: 0 }} activeDot={{ r: 4 }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            {/* Interns Overview — interactive chart with time-range filter */}
+            <InternsOverviewChart />
 
             {/* Pie Chart */}
             <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm flex flex-col">
