@@ -585,3 +585,53 @@ Wajib di-set agar link reset password di email mengarah ke URL yang benar.
 
 **Last Updated:** 2026-08-17 (Sesi Lanjutan)
 **Session Status:** Programs covered fix, selection session detail lengkap, task todo link fix, fitur lupa password via SMTP — semua implemented, tested, dan verified.
+
+---
+
+## Session Update — 2026-08-17 (Sesi Terakhir)
+
+### Perubahan dari commit `353157d` hingga `41a76df`
+
+#### 1. Feat: Email Notifikasi Sesi Seleksi via SMTP
+
+Ketika admin membuat sesi seleksi baru untuk applicant di `/admin/applicants`, sistem sekarang otomatis mengirimkan email notifikasi ke applicant yang bersangkutan.
+
+**Isi email yang dikirim:**
+- Judul undangan sesuai tipe sesi: Seleksi Administrasi, Wawancara, Tes Teknis, HR Interview, Wawancara Final, atau Sesi Seleksi
+- Kalimat pembuka yang hangat dan profesional
+- Kotak info biru berisi detail lengkap: Program, Posisi, Jenis sesi, Hari & Tanggal, Pukul (WIB), Metode (Online/Offline), Link Meeting atau Lokasi, Pewawancara
+- Kotak catatan kuning kalau admin mengisi notes
+- Pesan motivasi penutup: "Kami berharap yang terbaik untuk Anda. Semangat!"
+- Tombol "Lihat Status Pendaftaran Saya" → mengarah ke `/intern/internship-registration`
+
+**Implementasi:**
+- Email dikirim secara fire-and-forget (tidak block response kalau SMTP lambat/error)
+- Hanya terkirim kalau applicant punya email yang valid di database
+- Menggunakan `NEXT_PUBLIC_APP_URL` untuk link tombol di email
+
+**File yang diubah:**
+- `src/services/email.ts` — tambah fungsi `sendSelectionSessionEmail` dengan template HTML lengkap
+- `src/features/admin/services/applicant.actions.ts` — panggil `sendSelectionSessionEmail` di `createSelectionSessionAction` setelah transaksi DB berhasil, fetch data user + program + posisi dari aplikasi
+
+---
+
+## Updated Key Implementation Files
+
+- `src/services/email.ts` — 4 fungsi email tersedia: `sendApprovalEmail`, `sendRejectionEmail`, `sendPasswordResetEmail`, `sendSelectionSessionEmail`
+- `src/features/admin/services/applicant.actions.ts` — `createSelectionSessionAction` sekarang trigger email notifikasi setelah sesi dibuat
+
+---
+
+## Semua Trigger Email di Sistem
+
+| Event | Fungsi | File |
+|---|---|---|
+| Registrasi akun disetujui admin | `sendApprovalEmail` | `registration-approval.actions.ts` |
+| Registrasi akun ditolak admin | `sendRejectionEmail` | `registration-approval.actions.ts` |
+| Lamaran program disetujui admin | `sendApprovalEmail` | `applicant.actions.ts` |
+| Lamaran program ditolak admin | `sendRejectionEmail` | `applicant.actions.ts` |
+| Sesi seleksi dibuat admin | `sendSelectionSessionEmail` | `applicant.actions.ts` |
+| Request lupa password | `sendPasswordResetEmail` | `forgot-password.actions.ts` |
+
+**Last Updated:** 2026-08-17 (Sesi Terakhir)
+**Session Status:** Email notifikasi sesi seleksi implemented dan verified via SMTP Gmail.
