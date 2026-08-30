@@ -99,3 +99,97 @@ export const sendPasswordResetEmail = async (to: string, name: string, resetUrl:
   `;
   return sendEmail({ to, subject, html });
 };
+
+export const sendSelectionSessionEmail = async (
+  to: string,
+  name: string,
+  session: {
+    title: string;
+    type: string;
+    scheduledAt: Date;
+    method: string;
+    location?: string | null;
+    meetingLink?: string | null;
+    interviewerName?: string | null;
+    notes?: string | null;
+  },
+  programTitle: string,
+  position: string | null
+) => {
+  const typeLabel: Record<string, string> = {
+    ADMINISTRATION:  "Seleksi Administrasi",
+    INTERVIEW:       "Wawancara",
+    TECHNICAL_TEST:  "Tes Teknis",
+    HR_INTERVIEW:    "Wawancara HR",
+    FINAL_INTERVIEW: "Wawancara Final",
+    OTHER:           "Sesi Seleksi",
+  };
+
+  const label = typeLabel[session.type] ?? "Sesi Seleksi";
+
+  const tanggal = new Date(session.scheduledAt).toLocaleDateString("id-ID", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  });
+  const jam = new Date(session.scheduledAt).toLocaleTimeString("id-ID", {
+    hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta"
+  });
+
+  const locationInfo = session.method === "ONLINE"
+    ? session.meetingLink
+      ? `<a href="${session.meetingLink}" style="color: #2563eb;">${session.meetingLink}</a>`
+      : "Link meeting akan diinformasikan lebih lanjut."
+    : session.location || "Lokasi akan diinformasikan lebih lanjut.";
+
+  const subject = `Undangan ${label} – LEXA Internship System`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+      <h2 style="color: #2563eb; text-align: center;">Undangan ${label}</h2>
+
+      <p>Halo <strong>${name}</strong>,</p>
+      <p>
+        Terima kasih atas minat Anda untuk bergabung di program magang <strong>LEXA Software House</strong>.
+        Kami dengan senang hati mengundang Anda untuk mengikuti tahap selanjutnya dalam proses seleksi.
+      </p>
+
+      <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 16px 20px; margin: 24px 0; border-radius: 4px;">
+        <p style="margin: 0 0 8px; font-weight: bold; color: #1e40af; font-size: 15px;">Detail ${label}</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #334155;">
+          <tr><td style="padding: 4px 0; width: 130px; color: #64748b;">Program</td><td style="padding: 4px 0;"><strong>${programTitle}</strong></td></tr>
+          ${position ? `<tr><td style="padding: 4px 0; color: #64748b;">Posisi</td><td style="padding: 4px 0;"><strong>${position}</strong></td></tr>` : ""}
+          <tr><td style="padding: 4px 0; color: #64748b;">Jenis</td><td style="padding: 4px 0;">${label}</td></tr>
+          <tr><td style="padding: 4px 0; color: #64748b;">Hari & Tanggal</td><td style="padding: 4px 0;">${tanggal}</td></tr>
+          <tr><td style="padding: 4px 0; color: #64748b;">Pukul</td><td style="padding: 4px 0;">${jam} WIB</td></tr>
+          <tr><td style="padding: 4px 0; color: #64748b;">Metode</td><td style="padding: 4px 0;">${session.method === "ONLINE" ? "Online" : "Offline / Tatap Muka"}</td></tr>
+          <tr><td style="padding: 4px 0; color: #64748b;">${session.method === "ONLINE" ? "Link Meeting" : "Lokasi"}</td><td style="padding: 4px 0;">${locationInfo}</td></tr>
+          ${session.interviewerName ? `<tr><td style="padding: 4px 0; color: #64748b;">Pewawancara</td><td style="padding: 4px 0;">${session.interviewerName}</td></tr>` : ""}
+        </table>
+      </div>
+
+      ${session.notes ? `
+      <div style="background-color: #fefce8; border-left: 4px solid #eab308; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+        <p style="margin: 0; color: #713f12; font-size: 13px;"><strong>Catatan dari Tim Seleksi:</strong><br/>${session.notes}</p>
+      </div>` : ""}
+
+      <p>Mohon untuk <strong>hadir tepat waktu</strong> dan mempersiapkan diri sebaik mungkin. Pastikan koneksi internet Anda stabil jika sesi dilakukan secara online.</p>
+
+      <p>Jika ada pertanyaan atau kendala, silakan hubungi tim kami sesegera mungkin.</p>
+
+      <p>Kami berharap yang terbaik untuk Anda. Semangat!</p>
+
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/intern/internship-registration"
+          style="background-color: #2563eb; color: white; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          Lihat Status Pendaftaran Saya
+        </a>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+      <p style="color: #64748b; font-size: 12px; text-align: center;">
+        Email ini dikirim otomatis oleh LEXA Internship System. Mohon untuk tidak membalas email ini.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+};
