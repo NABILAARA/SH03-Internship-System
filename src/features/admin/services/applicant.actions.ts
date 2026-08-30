@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { sendApprovalEmail, sendRejectionEmail } from "@/services/email";
+import { sendApprovalEmail, sendRejectionEmail, sendSelectionSessionEmail } from "@/services/email";
 import {
   ApplicationStatus,
   SelectionMethod,
@@ -127,7 +127,7 @@ export async function createSelectionSessionAction(data: {
   }
 
   try {
-    await prisma.$transaction([
+    const [createdSession] = await prisma.$transaction([
       prisma.selectionSession.create({
         data: {
           applicationId: data.applicationId,
@@ -147,6 +147,36 @@ export async function createSelectionSessionAction(data: {
         data: { status: data.type.includes("INTERVIEW") ? "INTERVIEW" : "IN_REVIEW" },
       }),
     ]);
+
+    // Kirim email notifikasi ke applicant
+    const application = await prisma.application.findUnique({
+      where: { id: data.applicationId },
+      select: {
+        position: true,
+        user: { select: { name: true, email: true } },
+        program: { select: { title: true } },
+      },
+    });
+
+    if (application?.user?.email) {
+      sendSelectionSessionEmail(
+        application.user.email,
+        application.user.name ?? "Peserta",
+        {
+          title: createdSession.title,
+          type: createdSession.type,
+          scheduledAt: createdSession.scheduledAt,
+          method: createdSession.method,
+          location: createdSession.location,
+          meetingLink: createdSession.meetingLink,
+          interviewerName: createdSession.interviewerName,
+          notes: createdSession.notes,
+        },
+        application.program.title,
+        application.position
+      ).catch(err => console.error("Failed to send selection session email:", err));
+    }
+
     revalidateApplicationViews();
     return { success: true };
   } catch (error) {
