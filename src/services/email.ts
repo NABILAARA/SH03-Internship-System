@@ -72,3 +72,30 @@ export const sendRejectionEmail = async (to: string, name: string, reason?: stri
   `;
   return sendEmail({ to, subject, html });
 };
+
+export const sendPasswordResetEmail = async (to: string, name: string, resetUrl: string) => {
+  const subject = "Reset Password - LEXA Internship System";
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+      <h2 style="color: #2563eb; text-align: center;">Reset Password Akun Anda</h2>
+      <p>Halo <strong>${name}</strong>,</p>
+      <p>Kami menerima permintaan untuk mereset password akun LEXA Internship System Anda.</p>
+      <p>Klik tombol di bawah untuk membuat password baru. Link ini hanya berlaku selama <strong>1 jam</strong>.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          Reset Password Saya
+        </a>
+      </div>
+      <p style="color: #64748b; font-size: 13px;">Atau salin dan tempel link berikut di browser Anda:</p>
+      <p style="background: #f1f5f9; padding: 10px; border-radius: 6px; word-break: break-all; font-size: 12px; color: #475569;">${resetUrl}</p>
+      <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0; color: #92400e; font-size: 13px;">
+          <strong>Penting:</strong> Jika Anda tidak meminta reset password, abaikan email ini. Password Anda tidak akan berubah.
+        </p>
+      </div>
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+      <p style="color: #64748b; font-size: 12px; text-align: center;">Email ini dikirim otomatis oleh LEXA Internship System. Mohon untuk tidak membalas email ini.</p>
+    </div>
+  `;
+  return sendEmail({ to, subject, html });
+};
