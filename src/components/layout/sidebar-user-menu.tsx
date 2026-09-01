@@ -3,14 +3,16 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronUp, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 interface SidebarUserMenuProps {
   name: string;
   role: string;
   initial: string;
+  image?: string | null;
 }
 
-export function SidebarUserMenu({ name, role, initial }: Readonly<SidebarUserMenuProps>) {
+export function SidebarUserMenu({ name, role, initial, image }: Readonly<SidebarUserMenuProps>) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -47,9 +49,13 @@ export function SidebarUserMenu({ name, role, initial }: Readonly<SidebarUserMen
         className="flex w-full items-center gap-2.5 px-3 py-3 hover:bg-slate-800/60 transition rounded-none"
       >
         {/* Avatar */}
-        <div className="h-7 w-7 shrink-0 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-semibold text-blue-400 text-xs">
-          {initial}
-        </div>
+        <UserAvatar
+          src={image}
+          name={name}
+          email={initial}
+          size="sm"
+          className="shrink-0"
+        />
 
         {/* Info */}
         <div className="flex-1 min-w-0 text-left">

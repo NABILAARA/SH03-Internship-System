@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { roleNavigation } from "@/lib/navigation/role-navigation";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserMenu } from "./sidebar-user-menu";
+import { prisma } from "@/lib/db";
 
 export async function AppSidebar() {
   const session = await auth();
@@ -15,6 +16,17 @@ export async function AppSidebar() {
     label: item.label,
     href: item.href
   }));
+
+  // Fetch image directly from DB — session.user.image only has it
+  // after the JWT callback has been updated and token refreshed
+  let userImage: string | null = null;
+  if (session?.user?.id) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { image: true },
+    });
+    userImage = dbUser?.image ?? null;
+  }
 
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-48 flex-col border-r border-slate-800 bg-[#0f172a] text-slate-200 lg:flex z-30">
@@ -51,6 +63,7 @@ export async function AppSidebar() {
         name={session?.user?.name || "User"}
         role={userRole}
         initial={session?.user?.name?.[0]?.toUpperCase() || "U"}
+        image={userImage}
       />
     </aside>
   );

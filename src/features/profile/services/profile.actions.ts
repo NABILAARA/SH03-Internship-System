@@ -16,6 +16,7 @@ export async function getProfileData() {
       id: true,
       name: true,
       email: true,
+      image: true,
       role: true,
       createdAt: true,
       approvalStatus: true,

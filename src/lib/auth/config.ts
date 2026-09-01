@@ -1,5 +1,4 @@
 import type { NextAuthConfig } from "next-auth";
-import type { UserRole } from "@/types/roles";
 
 export const authConfig = {
   providers: [],
@@ -18,11 +17,17 @@ export const authConfig = {
     jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
+        // Persist image into token on first sign-in
+        token.image = user.image ?? null;
       }
 
-      // Handle session update to refresh token
+      // Handle session update to refresh token data
       if (trigger === "update" && session) {
         token.role = session.role;
+        // Allow refreshing image via update() call
+        if ("image" in session) {
+          token.image = session.image ?? null;
+        }
       }
 
       return token;
@@ -30,7 +35,13 @@ export const authConfig = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub ?? "";
-        session.user.role = token.role as UserRole;
+        session.user.role = token.role as import("@/types/roles").UserRole;
+        // Expose image to session — components can read session.user.image
+        if (token.image !== undefined) {
+          // Cast needed: JWT token.image can be {} in some NextAuth versions
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (session.user as any).image = token.image ?? null;
+        }
       }
 
       return session;

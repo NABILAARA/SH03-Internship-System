@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { signIn } from "next-auth/react";
 import { updateProfileAction, changePasswordAction, changeEmailAction, updateInternProfileAction } from "../services/profile.actions";
 import { useRouter } from "next/navigation";
+import { AvatarEditModal } from "@/components/shared/avatar-edit-modal";
 
 type ProfileFormProps = {
   user: {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
     role: string;
     createdAt: Date;
     approvalStatus: string;
@@ -130,6 +132,9 @@ export function ProfileForm({ user }: Readonly<ProfileFormProps>) {
   const [nameError, setNameError] = useState<string | null>(null);
   const [nameSuccess, setNameSuccess] = useState(false);
 
+  // ── Avatar state ──
+  const [avatarImage, setAvatarImage] = useState<string | null>(user.image ?? null);
+
   const [newEmail, setNewEmail] = useState("");
   const [emailPassword, setEmailPassword] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
@@ -210,8 +215,6 @@ export function ProfileForm({ user }: Readonly<ProfileFormProps>) {
     catch { setGithubLoading(false); }
   };
 
-  const avatarInitial = (user.name?.[0] ?? user.email[0]).toUpperCase();
-
   // ── Completeness — 21 field total ─────────────────────────
   const personalFields = [
     internData.name,        // 1. Nama lengkap
@@ -272,9 +275,12 @@ export function ProfileForm({ user }: Readonly<ProfileFormProps>) {
 
         <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
           <div className="relative shrink-0">
-            <div className="h-16 w-16 rounded-xl bg-white/20 border-2 border-white/30 flex items-center justify-center text-2xl font-extrabold text-white">
-              {avatarInitial}
-            </div>
+            <AvatarEditModal
+              currentImage={avatarImage}
+              name={user.name}
+              email={user.email}
+              onAvatarChange={(url) => setAvatarImage(url)}
+            />
             <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 border-2 border-white" />
           </div>
           <div className="flex-1 min-w-0 space-y-2">

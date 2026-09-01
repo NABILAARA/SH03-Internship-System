@@ -4,12 +4,14 @@ import { useState } from "react";
 import { User, Info, BookOpen, ChevronDown, ChevronUp, Shield, KeyRound, Pencil, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateAdminNameAction, changeAdminPasswordAction } from "../services/settings.actions";
+import { AvatarEditModal } from "@/components/shared/avatar-edit-modal";
 
 type AdminSettingsProps = {
   admin: {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
     createdAt: Date;
   };
   nodeEnv: string;
@@ -27,6 +29,9 @@ type FeedbackState = { type: "success" | "error"; message: string } | null;
 
 export function AdminSettings({ admin, nodeEnv }: Readonly<AdminSettingsProps>) {
   const [panduan, setPanduan] = useState(false);
+
+  // Avatar
+  const [avatarImage, setAvatarImage] = useState<string | null>(admin.image ?? null);
 
   // Edit nama
   const [editingName, setEditingName] = useState(false);
@@ -92,6 +97,23 @@ export function AdminSettings({ admin, nodeEnv }: Readonly<AdminSettingsProps>) 
             <User className="h-5 w-5 text-blue-600" />
           </div>
           <h2 className="text-lg font-semibold text-slate-900">Profil Admin</h2>
+        </div>
+
+        {/* Avatar */}
+        <div className="mb-6 flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-5">
+          <AvatarEditModal
+            currentImage={avatarImage}
+            name={admin.name}
+            email={admin.email}
+            onAvatarChange={(url) => setAvatarImage(url)}
+          />
+          <div>
+            <p className="text-sm font-semibold text-slate-800">{name || "—"}</p>
+            <p className="text-xs text-slate-400">{admin.email}</p>
+            <p className="mt-1 text-[11px] text-slate-400">
+              Klik avatar untuk mengubah foto profil
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
