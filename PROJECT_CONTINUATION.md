@@ -708,3 +708,183 @@ Fitur ini tidak memerlukan perubahan database. Data diambil dari tabel `Applicat
 
 **Last Updated:** 2026-08-30
 **Session Status:** Interns Overview chart upgraded — interactive time-range filter, server-side aggregation, correct start-date logic, WIB timezone, dynamic granularity, loading/empty/error states — implemented, verified, and pushed.
+
+---
+
+## Session Update — 2026-08-30 (Lanjutan)
+
+### Perubahan: Fitur Foto Profil / Avatar untuk Semua Role
+
+#### Latar Belakang
+Sebelumnya semua role (ADMIN, MENTOR, INTERN) hanya menampilkan inisial nama sebagai avatar. Tidak ada mekanisme upload, crop, atau penggantian foto profil. Sidebar juga hanya menampilkan inisial huruf.
+
+#### Tidak Ada Migration Database
+`User.image String?` sudah ada di Prisma schema sejak init migration. Tidak ada perubahan schema atau migration baru yang diperlukan.
+
+#### Tidak Ada Dependency Baru
+- Crop gambar menggunakan **Canvas API native** — zero library tambahan.
+- `@radix-ui/react-avatar` dan `@radix-ui/react-dialog` sudah terinstall sebelumnya.
+
+---
+
+#### File Baru yang Dibuat
+
+**`src/components/shared/user-avatar.tsx`**
+- Reusable `<UserAvatar>` component berbasis `@radix-ui/react-avatar`.
+- Props: `src` (URL gambar), `name`, `email` (untuk fallback inisial), `size` (sm/md/lg/xl), `className`.
+- Fallback otomatis ke inisial nama (2 huruf jika nama lebih dari 1 kata) atau inisial email jika nama kosong.
+- Digunakan di: sidebar, profile banner semua role.
+
+**`src/components/shared/avatar-edit-modal.tsx`**
+- Modal lengkap untuk upload, crop, dan hapus foto profil.
+- Trigger: klik avatar (dengan hover overlay kamera) — tidak perlu tombol terpisah.
+- **Upload**: drag-and-drop atau klik untuk pilih file. Validasi MIME (JPEG/PNG/WebP) dan ukuran (maks 5 MB) di client.
+- **Crop interface**: Canvas API — user bisa drag foto untuk menggeser posisi, scroll mouse atau slider untuk zoom. Preview berbentuk lingkaran.
+- **Simpan**: output WebP 512×512 px dikirim ke server via `uploadAvatarAction`.
+- **Hapus**: tombol "Hapus Foto Profil" dengan konfirmasi ringan sebelum eksekusi.
+- Setelah upload/hapus berhasil: memanggil `updateSession({ image })` dari `next-auth/react` agar sidebar langsung ter-refresh tanpa logout.
+
+**`src/features/profile/services/avatar.actions.ts`**
+- `uploadAvatarAction(formData)` — server action untuk upload avatar:
+  - Validasi MIME dan ukuran di server.
+  - Validasi **magic bytes** untuk mencegah MIME spoofing (JPEG: `FF D8 FF`, PNG: `89 50 4E 47`, WebP: `RIFF...WEBP`).
+  - Upload ke Supabase Storage bucket `profile-avatars` via `createAdminClient()` (service role key — tidak pernah exposed ke browser).
+  - Path: `{userId}/avatar.webp` — selalu overwrite, tidak ada orphan file.
+  - URL publik disimpan ke `User.image` di database dengan cache-buster `?v={timestamp}`.
+  - `ensureBucket()` — membuat bucket jika belum ada (public read, 5MB limit).
+- `removeAvatarAction()` — menghapus file dari storage dan set `User.image = null`.
+- `getAvatarUrlAction()` — membaca URL avatar current dari DB.
+
+---
+
+#### File yang Dimodifikasi
+
+**`src/features/profile/services/profile.actions.ts`**
+- `getProfileData()` ditambahkan `image: true` ke Prisma select agar avatar URL ikut ter-fetch bersama data profil.
+
+**`src/features/profile/components/profile-form.tsx`**
+- Ditambahkan `image?: string | null` ke `ProfileFormProps`.
+- Ditambahkan state `avatarImage` yang diinisialisasi dari `user.image`.
+- Avatar statis (inisial huruf dalam div) di Profile Banner diganti dengan `<AvatarEditModal>`.
+- Variable `avatarInitial` yang tidak terpakai dihapus.
+- Berlaku untuk **INTERN dan MENTOR** karena keduanya share komponen `ProfileForm` yang sama.
+
+**`src/features/admin/components/admin-settings.tsx`**
+- Ditambahkan `image?: string | null` ke `AdminSettingsProps`.
+- Ditambahkan state `avatarImage`.
+- Section avatar baru disisipkan di atas grid info profil: menampilkan `<AvatarEditModal>` besar + nama dan email di sampingnya.
+- Berlaku untuk **ADMIN** di halaman `/admin/settings`.
+
+**`src/app/(dashboard)/admin/settings/page.tsx`**
+- Ditambahkan `image: true` ke Prisma select agar avatar URL tersedia saat render halaman settings admin.
+
+**`src/components/layout/app-sidebar.tsx`**
+- Ditambahkan import `prisma` dan query `user.image` langsung dari DB (tidak dari session token — lebih reliable sebelum token di-refresh).
+- Prop `image` diteruskan ke `SidebarUserMenu`.
+
+**`src/components/layout/sidebar-user-menu.tsx`**
+- Ditambahkan prop `image?: string | null`.
+- Import `UserAvatar` dari `@/components/shared/user-avatar`.
+- Div inisial huruf di footer sidebar diganti dengan `<UserAvatar size="sm">` — menampilkan foto jika ada, fallback ke inisial jika tidak ada.
+
+**`src/types/auth.d.ts`**
+- Ditambahkan `image?: string | null` ke:
+  - `Session.user` interface
+  - `User` interface
+  - `JWT` interface
+
+**`src/lib/auth/config.ts`**
+- `jwt` callback: menyimpan `token.image = user.image` saat login pertama; menangani `session.image` saat `trigger === "update"` (dipakai oleh `updateSession()` dari modal).
+- `session` callback: meneruskan `token.image` ke `session.user.image` agar tersedia di seluruh aplikasi.
+- Import `UserRole` yang tidak terpakai dihapus.
+
+---
+
+#### Alur Upload Avatar
+
+```
+User klik avatar di halaman profil
+        ↓
+Modal terbuka — tampil foto current atau fallback inisial
+        ↓
+User pilih / drag-drop foto (JPEG/PNG/WebP, maks 5 MB)
+        ↓
+Validasi client-side (MIME + ukuran)
+        ↓
+Preview crop di canvas — drag untuk geser, scroll/slider untuk zoom
+        ↓
+User klik "Simpan Foto"
+        ↓
+Canvas di-export ke WebP 512×512 px
+        ↓
+uploadAvatarAction(formData) — server:
+  ├── Cek session (userId dari server, bukan client)
+  ├── Validasi MIME + ukuran + magic bytes
+  ├── Upload ke Supabase Storage profile-avatars/{userId}/avatar.webp (upsert)
+  └── Update User.image = publicUrl?v=timestamp di DB
+        ↓
+updateSession({ image: newUrl }) — refresh JWT token
+        ↓
+Avatar langsung tampil di profil dan sidebar tanpa logout
+```
+
+#### Alur Hapus Avatar
+
+```
+User klik "Hapus Foto Profil" → konfirmasi → klik "Hapus"
+        ↓
+removeAvatarAction() — server:
+  ├── Hapus file dari Supabase Storage
+  └── Set User.image = null di DB
+        ↓
+updateSession({ image: null }) — refresh JWT token
+        ↓
+Fallback inisial tampil kembali di profil dan sidebar
+```
+
+---
+
+#### Security Model
+- `userId` selalu diambil dari **server session** — tidak bisa dimanipulasi dari client.
+- Upload hanya melalui `createAdminClient()` (service role key) di server — key tidak pernah exposed ke browser.
+- Validasi berlapis: client (UX) + server (MIME, ukuran, magic bytes).
+- Path storage di-generate oleh server (`{userId}/avatar.webp`) — filename dari user tidak dipakai langsung.
+- Setiap user hanya bisa mengubah avatar miliknya sendiri.
+- Bucket `profile-avatars` bersifat public-read (agar URL gambar bisa ditampilkan di `<img>`) tapi upload/delete hanya melalui server authenticated.
+
+---
+
+#### Storage Bucket
+- Nama: `profile-avatars`
+- Dibuat otomatis oleh `ensureBucket()` saat upload pertama kali jika belum ada.
+- Public read: `true`
+- File size limit: 5 MB
+- Allowed MIME: `image/jpeg`, `image/png`, `image/webp`
+
+---
+
+## Updated Key Implementation Files (2026-08-30 Lanjutan)
+
+- `src/components/shared/user-avatar.tsx` — reusable avatar display (new file).
+- `src/components/shared/avatar-edit-modal.tsx` — modal crop + upload + remove (new file).
+- `src/features/profile/services/avatar.actions.ts` — server actions upload/remove/get avatar (new file).
+- `src/features/profile/services/profile.actions.ts` — tambah `image` ke select.
+- `src/features/profile/components/profile-form.tsx` — avatar modal di profile banner (INTERN & MENTOR).
+- `src/features/admin/components/admin-settings.tsx` — avatar section di settings (ADMIN).
+- `src/app/(dashboard)/admin/settings/page.tsx` — tambah `image` ke prisma select.
+- `src/components/layout/app-sidebar.tsx` — query image dari DB, pass ke sidebar menu.
+- `src/components/layout/sidebar-user-menu.tsx` — render `UserAvatar` di footer sidebar.
+- `src/lib/auth/config.ts` — pipe `image` melalui JWT dan session callbacks.
+- `src/types/auth.d.ts` — tambah `image` ke interface Session, User, JWT.
+
+---
+
+## Verification (2026-08-30 Lanjutan)
+
+- `npx prisma generate` — ✅ exit 0.
+- `npx tsc --noEmit` — ✅ exit 0 (2 bug diperbaiki: duplicate vars di app-sidebar, type error di config.ts).
+- `npm run build` — ✅ exit 0, compiled successfully, 35 pages generated.
+- `git push` — ✅ commit `fcea202` pushed to `main`.
+
+**Last Updated:** 2026-08-30 (Lanjutan)
+**Session Status:** Fitur foto profil / avatar untuk semua role (ADMIN, MENTOR, INTERN) — upload, crop Canvas, replace, remove, fallback inisial, Supabase Storage, session refresh tanpa logout — implemented, verified, dan pushed.
