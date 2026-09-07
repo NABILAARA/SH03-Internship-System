@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPeriod } from "@/utils/format-period";
 import { useEffect, useState, useMemo } from "react";
 import {
   Users, Search, Plus, X, ChevronLeft, ChevronRight,
@@ -27,7 +28,8 @@ interface Mentor {
 interface Program {
   id: string;
   title: string;
-  period: string | null;
+  startDate: Date | null;
+  endDate: Date | null;
 }
 
 interface User {
@@ -498,7 +500,9 @@ export function UserListContainer({
                       className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition">
                       <option value="">Pilih program...</option>
                       {programs.map(p => (
-                        <option key={p.id} value={p.id}>{p.title} {p.period ? `(${p.period})` : ""}</option>
+                        <option key={p.id} value={p.id}>
+                          {p.title} {(p.startDate || p.endDate) ? `(${formatPeriod(p.startDate, p.endDate)})` : ""}
+                        </option>
                       ))}
                     </select>
                   </div>

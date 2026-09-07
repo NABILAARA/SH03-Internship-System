@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPeriod } from "@/utils/format-period";
 import { useState, useMemo } from "react";
 import {
   Users, Check, X, Search, Link as LinkIcon,
@@ -37,7 +38,7 @@ type User = {
   organizationExperience?: string | null;
   workExperience?: string | null;
 };
-type Program = { id: string; title: string; period?: string | null };
+type Program = { id: string; title: string; startDate?: Date | null; endDate?: Date | null };
 
 type Application = {
   id: string;
@@ -220,7 +221,7 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
         a.user.email,
         a.program.title,
         a.position ?? "-",
-        a.program.period ?? "-",
+        formatPeriod(a.program.startDate, a.program.endDate),
         new Date(a.createdAt).toLocaleDateString("id-ID"),
         a.status,
       ])
@@ -420,7 +421,9 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                         )}
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className="text-xs text-slate-500 font-medium">{app.program.period ?? "—"}</span>
+                        <span className="text-xs text-slate-500 font-medium">
+                          {formatPeriod(app.program.startDate, app.program.endDate)}
+                        </span>
                       </td>
                       <td className="px-4 py-3.5">
                         <p className="text-xs text-slate-600">
@@ -546,7 +549,7 @@ export function ApplicantManager({ initialApplications }: Readonly<ApplicantMana
                 {([
                   ["Program",        detailApp.program.title],
                   ["Posisi Dilamar", detailApp.position ?? "—"],
-                  ["Period",         detailApp.program.period ?? "—"],
+                  ["Period",         formatPeriod(detailApp.program.startDate, detailApp.program.endDate)],
                   ["Tanggal Daftar", new Date(detailApp.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })],
                 ] as [string, string][]).map(([label, val]) => (
                   <div key={label} className="bg-slate-50 rounded-xl p-3">

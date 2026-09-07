@@ -150,13 +150,15 @@ model VerificationToken {
 }
 
 model InternshipProgram {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String
-  status      String   @default("published") // draft, published, closed
-  period      String?  // e.g. "July - Dec 2026"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      String    @default("published") // draft, published, closed
+  period      String?   // legacy field — kept for backward compat, not used in UI
+  startDate   DateTime? // Tanggal mulai program
+  endDate     DateTime? // Tanggal selesai program
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   applications Application[]
 }

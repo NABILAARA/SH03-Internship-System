@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { formatPeriod } from "@/utils/format-period";
 import {
   Users, Award, ClipboardList,
   TrendingUp, CheckCircle2, XCircle,
@@ -17,7 +18,8 @@ import { Button } from "@/components/ui/button";
 interface ProgramSummary {
   id: string;
   title: string;
-  period: string | null;
+  startDate: Date | null;
+  endDate: Date | null;
   status: string;
   totalApplicants: number;
   accepted: number;
@@ -205,8 +207,7 @@ export function AdminReportsNew({
       ...filteredHistory.map(u => {
         const processed = u.approvalStatus === "APPROVED" ? u.approvedAt : u.rejectedAt;
         return [u.name ?? "-", u.email, u.role, u.approvalStatus, formatDate(u.createdAt), formatDate(processed), u.approvalReason ?? "-"];
-      }),
-    ],
+      }),    ],
     `registrasi-${new Date().toISOString().slice(0, 10)}.csv`
   );
 
@@ -350,7 +351,9 @@ export function AdminReportsNew({
                     <td className="px-5 py-3.5">
                       <p className="font-semibold text-slate-800 text-sm">{p.title}</p>
                     </td>
-                    <td className="px-5 py-3.5 text-xs text-slate-500">{p.period ?? "—"}</td>
+                    <td className="px-5 py-3.5 text-xs text-slate-500">
+                      {formatPeriod(p.startDate, p.endDate)}
+                    </td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                         p.status === "published" ? "bg-emerald-100 text-emerald-700"

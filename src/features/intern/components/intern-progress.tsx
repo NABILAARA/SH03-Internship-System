@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPeriod } from "@/utils/format-period";
 import { Clock, TrendingUp, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 
 type LogbookEntry = {
@@ -24,7 +25,7 @@ type EvaluationData = {
 type ProgressData = {
   logbooks: LogbookEntry[];
   evaluation: EvaluationData | null;
-  application: { program: { title: string; period: string | null } } | null;
+  application: { program: { title: string; startDate: Date | null; endDate: Date | null } } | null;
   stats: {
     total: number;
     approved: number;
@@ -76,7 +77,9 @@ export function InternProgress({ data }: Readonly<InternProgressProps>) {
           {application && (
             <span className="inline-block bg-white/20 border border-white/30 rounded-full px-4 py-1.5 text-sm font-semibold text-white self-start sm:self-auto">
               {application.program.title}
-              {application.program.period ? ` · ${application.program.period}` : ""}
+              {(application.program.startDate || application.program.endDate)
+                ? ` · ${formatPeriod(application.program.startDate, application.program.endDate)}`
+                : ""}
             </span>
           )}
         </div>
