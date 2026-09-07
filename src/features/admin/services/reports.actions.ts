@@ -55,7 +55,8 @@ export async function getReportsData() {
       select: {
         id: true,
         title: true,
-        period: true,
+        startDate: true,
+        endDate: true,
         status: true,
         applications: {
           select: { status: true },
@@ -74,7 +75,8 @@ export async function getReportsData() {
       return {
         id: p.id,
         title: p.title,
-        period: p.period,
+        startDate: p.startDate,
+        endDate: p.endDate,
         status: p.status,
         totalApplicants,
         accepted,

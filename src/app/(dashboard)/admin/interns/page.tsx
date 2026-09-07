@@ -21,7 +21,8 @@ export default async function InternsPage() {
   const programs = (Array.isArray(programsResult) ? programsResult : []).map((p) => ({
     id: p.id,
     title: p.title,
-    period: p.period ?? null,
+    startDate: p.startDate ?? null,
+    endDate: p.endDate ?? null,
   }));
 
   return (

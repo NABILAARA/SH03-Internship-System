@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPeriod } from "@/utils/format-period";
 import { useState } from "react";
 import { Briefcase, Link as LinkIcon, Send, X, CheckCircle, Clock, AlertTriangle, HelpCircle, RefreshCw, Calendar, MapPin, Video, User, Bell } from "lucide-react";
 import { applyForProgramAction, resubmitApplicationAction } from "../services/application.actions";
@@ -10,7 +11,9 @@ type Program = {
   title: string;
   description: string;
   status: string;
-  period: string | null;
+  startDate: Date | null;
+  endDate: Date | null;
+  _count?: { applications: number };
 };
 
 type SelectionSession = {
@@ -437,7 +440,9 @@ export function InternRegistration({ programs, applications: initialApps }: Read
                 >
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg mb-1">{program.title}</h3>
-                    <p className="text-xs text-slate-400 mb-4">{program.period}</p>
+                    <p className="text-xs text-slate-400 mb-4">
+                      {formatPeriod(program.startDate, program.endDate)}
+                    </p>
                     <p className="text-slate-600 text-sm mb-6 line-clamp-3">
                       {program.description}
                     </p>

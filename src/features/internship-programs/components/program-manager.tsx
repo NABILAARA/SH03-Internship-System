@@ -20,7 +20,8 @@ type Program = {
   title: string;
   description: string;
   status: string;
-  period: string | null;
+  startDate: Date | null;
+  endDate: Date | null;
   _count: { applications: number };
 };
 
@@ -83,7 +84,8 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
   // Form
   const [title, setTitle]             = useState("");
   const [description, setDescription] = useState("");
-  const [period, setPeriod]           = useState("");
+  const [startDate, setStartDate]     = useState("");
+  const [endDate, setEndDate]         = useState("");
   const [status, setStatus]           = useState("published");
 
   // Stat counts
@@ -97,13 +99,15 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
 
   /* ── Modal helpers ── */
   const openAdd = () => {
-    setTitle(""); setDescription(""); setPeriod(""); setStatus("published");
+    setTitle(""); setDescription(""); setStartDate(""); setEndDate(""); setStatus("published");
     setEditingId(null); setError(null); setModalOpen(true);
   };
 
   const openEdit = (p: Program) => {
     setTitle(p.title); setDescription(p.description);
-    setPeriod(p.period ?? ""); setStatus(p.status);
+    setStartDate(p.startDate ? new Date(p.startDate).toISOString().split("T")[0] : "");
+    setEndDate(p.endDate ? new Date(p.endDate).toISOString().split("T")[0] : "");
+    setStatus(p.status);
     setEditingId(p.id); setError(null); setModalOpen(true);
   };
 
@@ -118,7 +122,8 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
     const data = {
       title: title.trim(),
       description: description.trim(),
-      period: period.trim(),
+      startDate: startDate,
+      endDate: endDate,
       status,
     };
 
@@ -126,12 +131,27 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
       if (editingId) {
         const res = await updateProgramAction(editingId, data);
         if (res.error) { setError(res.error); return; }
-        setPrograms(prev => prev.map(p => p.id === editingId ? { ...p, ...data } : p));
+        setPrograms(prev => prev.map(p => p.id === editingId ? {
+          ...p,
+          title: data.title,
+          description: data.description,
+          startDate: data.startDate ? new Date(data.startDate) : null,
+          endDate: data.endDate ? new Date(data.endDate) : null,
+          status: data.status,
+        } : p));
       } else {
         const res = await createProgramAction(data);
         if (res.error) { setError(res.error); return; }
         setPrograms(prev => [
-          { id: Math.random().toString(), ...data, _count: { applications: 0 } },
+          {
+            id: Math.random().toString(),
+            title: data.title,
+            description: data.description,
+            startDate: data.startDate ? new Date(data.startDate) : null,
+            endDate: data.endDate ? new Date(data.endDate) : null,
+            status: data.status,
+            _count: { applications: 0 }
+          },
           ...prev,
         ]);
       }
@@ -274,11 +294,15 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
                     </div>
                   </div>
 
-                  {/* Title + period */}
+                  {/* Title + dates */}
                   <div>
                     <h3 className="font-bold text-slate-800 text-sm leading-snug">{program.title}</h3>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {program.period || "Periode belum ditentukan"}
+                      {program.startDate && program.endDate
+                        ? `${new Date(program.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} – ${new Date(program.endDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}`
+                        : program.startDate
+                        ? `Mulai ${new Date(program.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}`
+                        : "Periode belum ditentukan"}
                     </p>
                   </div>
 
@@ -372,32 +396,48 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
                 />
               </div>
 
-              {/* Period + Status row */}
+              {/* Start Date + End Date row */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700" htmlFor="p-period">Batch / Period</label>
+                  <label className="text-xs font-semibold text-slate-700" htmlFor="p-start">
+                    Tanggal Mulai
+                  </label>
                   <input
-                    id="p-period"
-                    type="text"
-                    placeholder="e.g. Batch 4 · 3 months"
-                    value={period}
-                    onChange={e => setPeriod(e.target.value)}
+                    id="p-start"
+                    type="date"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
                     className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700" htmlFor="p-status">Status</label>
-                  <select
-                    id="p-status"
-                    value={status}
-                    onChange={e => setStatus(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                  >
-                    <option value="published">On Going (Aktif)</option>
-                    <option value="draft">Upcoming (Draft)</option>
-                    <option value="closed">Completed (Ditutup)</option>
-                  </select>
+                  <label className="text-xs font-semibold text-slate-700" htmlFor="p-end">
+                    Tanggal Selesai
+                  </label>
+                  <input
+                    id="p-end"
+                    type="date"
+                    value={endDate}
+                    min={startDate || undefined}
+                    onChange={e => setEndDate(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                  />
                 </div>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700" htmlFor="p-status">Status</label>
+                <select
+                  id="p-status"
+                  value={status}
+                  onChange={e => setStatus(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                >
+                  <option value="published">On Going (Aktif)</option>
+                  <option value="draft">Upcoming (Draft)</option>
+                  <option value="closed">Completed (Ditutup)</option>
+                </select>
               </div>
 
               {/* Description */}

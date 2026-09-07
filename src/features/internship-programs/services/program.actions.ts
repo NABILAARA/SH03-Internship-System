@@ -20,7 +20,8 @@ export async function getPrograms() {
 export async function createProgramAction(data: {
   title: string;
   description: string;
-  period: string;
+  startDate: string;
+  endDate: string;
   status: string;
 }) {
   try {
@@ -32,7 +33,8 @@ export async function createProgramAction(data: {
       data: {
         title: data.title,
         description: data.description,
-        period: data.period,
+        startDate: data.startDate ? new Date(data.startDate) : null,
+        endDate:   data.endDate   ? new Date(data.endDate)   : null,
         status: data.status || "published"
       }
     });
@@ -47,7 +49,7 @@ export async function createProgramAction(data: {
 
 export async function updateProgramAction(
   id: string,
-  data: { title: string; description: string; period: string; status: string }
+  data: { title: string; description: string; startDate: string; endDate: string; status: string }
 ) {
   try {
     const session = await auth();
@@ -59,7 +61,8 @@ export async function updateProgramAction(
       data: {
         title: data.title,
         description: data.description,
-        period: data.period,
+        startDate: data.startDate ? new Date(data.startDate) : null,
+        endDate:   data.endDate   ? new Date(data.endDate)   : null,
         status: data.status
       }
     });
