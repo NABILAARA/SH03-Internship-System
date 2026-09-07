@@ -295,7 +295,7 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
                   {/* Progress bar */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs text-slate-400">
-                      <span>Progress</span>
+                      <span>Duration</span>
                       <span className="font-semibold text-slate-600">{pct}%</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
