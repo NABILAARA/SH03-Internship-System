@@ -166,7 +166,7 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
       {/* Page Header */}
       <div className="bg-white/70 p-6 rounded-2xl border border-slate-100 shadow-sm backdrop-blur-md">
         <h1 className="text-2xl font-bold text-slate-800">Programs</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Manage all programs &amp; internship batches</p>
+        <p className="text-sm text-slate-500 mt-0.5">Manage all programs</p>
       </div>
 
       {/* Stat Cards */}
@@ -178,7 +178,6 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Total Programs</p>
             <p className="text-2xl font-bold text-slate-800 leading-tight">{counts.total}</p>
-            <p className="text-xs text-slate-400 mt-0.5">vs last month</p>
           </div>
         </div>
 
@@ -189,7 +188,6 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">On Going</p>
             <p className="text-2xl font-bold text-slate-800 leading-tight">{counts.ongoing}</p>
-            <p className="text-xs text-slate-400 mt-0.5">of all programs</p>
           </div>
         </div>
 
@@ -200,7 +198,6 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Upcoming</p>
             <p className="text-2xl font-bold text-slate-800 leading-tight">{counts.upcoming}</p>
-            <p className="text-xs text-slate-400 mt-0.5">starting soon</p>
           </div>
         </div>
 
@@ -211,7 +208,6 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Completed</p>
             <p className="text-2xl font-bold text-slate-800 leading-tight">{counts.completed}</p>
-            <p className="text-xs text-slate-400 mt-0.5">this year</p>
           </div>
         </div>
       </div>
@@ -221,7 +217,6 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-800">All Programs</h2>
-            <p className="text-xs text-slate-400">Manage batches, capacity, and mentors for each program</p>
           </div>
           <Button
             onClick={openAdd}
@@ -244,7 +239,17 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
             {programs.map((program, idx) => {
               const iconDef   = PROGRAM_ICONS[idx % PROGRAM_ICONS.length];
               const IconComp  = iconDef.icon;
-              const pct       = progPct(program.id, program.status);
+              const pct = (() => {
+                if (program.startDate && program.endDate) {
+                  const now   = Date.now();
+                  const start = new Date(program.startDate).getTime();
+                  const end   = new Date(program.endDate).getTime();
+                  if (now <= start) return 0;
+                  if (now >= end)   return 100;
+                  return Math.round(((now - start) / (end - start)) * 100);
+                }
+                return progPct(program.id, program.status);
+              })();
               const barColor  = PROGRESS_COLORS[idx % PROGRESS_COLORS.length];
 
               return (
