@@ -888,3 +888,68 @@ Fallback inisial tampil kembali di profil dan sidebar
 
 **Last Updated:** 2026-08-30 (Lanjutan)
 **Session Status:** Fitur foto profil / avatar untuk semua role (ADMIN, MENTOR, INTERN) — upload, crop Canvas, replace, remove, fallback inisial, Supabase Storage, session refresh tanpa logout — implemented, verified, dan pushed.
+
+---
+
+## Session Update — 2026-09-07
+
+### Perubahan dari commit `7c1a47c` hingga `5a6ca8b`
+
+#### 1. Ganti field `period` String → `startDate` + `endDate` DateTime di InternshipProgram
+
+- Field `period String?` di model `InternshipProgram` **tidak dihapus** (backward compat), ditambahkan dua field baru: `startDate DateTime?` dan `endDate DateTime?`
+- Migration baru: `20260817300000_add_program_start_end_date` — hanya `ADD COLUMN`, tidak menyentuh data lama
+- Helper baru: `src/utils/format-period.ts` — fungsi `formatPeriod(startDate, endDate)` → "1 Jul 2026 – 31 Des 2026"
+- **Form admin** (program-manager.tsx): input teks "Batch / Period" diganti dua date picker "Tanggal Mulai" dan "Tanggal Selesai"
+- Semua 8 file yang menampilkan `period` diupdate ke `startDate`/`endDate`: `program-manager.tsx`, `intern-registration.tsx`, `applicant-manager.tsx`, `intern-progress.tsx`, `user-list-container.tsx`, `admin/interns/page.tsx`, `reports.actions.ts`, `admin-reports-new.tsx`
+
+#### 2. Card Program — Interns Count hanya ACCEPTED
+
+- `getPrograms()` di `program.actions.ts` diubah: `_count.applications` sekarang filter `where: { status: "ACCEPTED" }` — sebelumnya menghitung semua aplikasi termasuk PENDING/REJECTED
+- Angka "Interns" di card program sekarang = jumlah intern yang benar-benar diterima
+
+#### 3. Card Program — Hapus section Mentor
+
+- Bagian "Mentor: Belum ditugaskan" dihapus dari card program
+- Import `UserCheck`, fungsi `avatarColor`, `initials`, dan variabel `mentorName` ikut dihapus
+
+#### 4. Card Program — Progress Bar = Rentang Waktu Nyata
+
+- Progress bar di card program sebelumnya pakai nilai pseudo-random dari ID program
+- Sekarang dihitung dari posisi hari ini relatif terhadap `startDate` → `endDate`:
+  - Belum mulai → 0%
+  - Sudah lewat endDate → 100%
+  - Sedang berjalan → persentase proporsional waktu
+  - Belum ada startDate/endDate → fallback ke pseudo-random
+
+#### 5. Label "Progress" → "Duration"
+
+- Label di atas progress bar pada card program diubah dari "Progress" menjadi "Duration" agar lebih deskriptif
+
+#### 6. Sertifikat PDF — Digambar Ulang dengan jsPDF (tanpa html2canvas)
+
+- Sebelumnya menggunakan `html2canvas` untuk screenshot DOM → hasil tidak konsisten (terpotong, portrait alih-alih landscape, terlalu lebar)
+- Sekarang PDF digambar langsung menggunakan **`jsPDF`** — tidak bergantung browser width atau DOM rendering sama sekali
+- Hasil selalu A4 landscape (297×210mm) yang presisi, tidak bisa salah ukuran
+- Isi PDF:
+  - Background gradient putih-biru muda
+  - Double border biru navy + gold corner ornaments
+  - **Logo LEXA** di-fetch dari `/logo-lexa.png`, dikonversi ke base64, di-embed via `pdf.addImage()` — fallback ke teks kalau fetch gagal
+  - "SERTIFIKAT KELULUSAN" dengan underline amber, satu baris
+  - Nomor sertifikat, nama penerima, program, nilai akhir
+  - Tanggal terbit + signature line + jabatan
+  - Seal lingkaran amber "ORIGINAL"
+
+---
+
+## Updated Key Implementation Files (2026-09-07)
+
+- `prisma/schema.prisma` — tambah `startDate DateTime?` dan `endDate DateTime?` ke `InternshipProgram`
+- `prisma/migrations/20260817300000_add_program_start_end_date/migration.sql` — ADD COLUMN aman
+- `src/utils/format-period.ts` — helper `formatPeriod(startDate, endDate)`
+- `src/features/internship-programs/services/program.actions.ts` — `getPrograms()` count ACCEPTED only, `createProgramAction`/`updateProgramAction` terima `startDate`/`endDate`
+- `src/features/internship-programs/components/program-manager.tsx` — date picker, progress bar real-time, label Duration, hapus mentor section
+- `src/features/intern/components/intern-certificate.tsx` — PDF via jsPDF langsung, logo embedded
+
+**Last Updated:** 2026-09-07
+**Session Status:** period → startDate/endDate, program card cleanup, certificate PDF rewrite — semua implemented dan verified.
