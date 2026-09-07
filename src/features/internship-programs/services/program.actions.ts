@@ -13,7 +13,15 @@ function revalidateAll() {
 export async function getPrograms() {
   return await prisma.internshipProgram.findMany({
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { applications: true } } }
+    include: {
+      _count: {
+        select: {
+          applications: {
+            where: { status: "ACCEPTED" }
+          }
+        }
+      }
+    }
   });
 }
 
