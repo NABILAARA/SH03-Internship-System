@@ -5,7 +5,6 @@ import {
   Plus, Trash2, Pencil, X, AlertCircle, Loader2, CheckCircle,
   FileText, Monitor, Palette, Smartphone, BarChart2,
   TrendingUp, Shield, BookOpen, Users2, CheckCircle2, Clock4, Award,
-  UserCheck,
 } from "lucide-react";
 import {
   createProgramAction,
@@ -54,22 +53,6 @@ const PROGRESS_COLORS = [
   "bg-blue-500", "bg-violet-500", "bg-emerald-500",
   "bg-orange-500", "bg-pink-500", "bg-teal-500", "bg-amber-500",
 ];
-
-const AVATAR_COLORS = [
-  "bg-blue-500","bg-violet-500","bg-emerald-500",
-  "bg-orange-500","bg-pink-500","bg-teal-500","bg-rose-500",
-];
-
-function avatarColor(str: string) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-function initials(name: string | null) {
-  if (!name) return "??";
-  return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
-}
 
 /* ─── Component ─────────────────────────────────────── */
 export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps>) {
@@ -263,8 +246,6 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
               const IconComp  = iconDef.icon;
               const pct       = progPct(program.id, program.status);
               const barColor  = PROGRESS_COLORS[idx % PROGRESS_COLORS.length];
-              // placeholder mentor name from program title initials
-              const mentorName = null as string | null;
 
               return (
                 <div
@@ -320,25 +301,8 @@ export function ProgramManager({ initialPrograms }: Readonly<ProgramManagerProps
                     </div>
                   </div>
 
-                  {/* Mentor + Interns count */}
-                  <div className="flex items-end justify-between border-t border-slate-100 pt-3">
-                    <div>
-                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Mentor</p>
-                      {mentorName ? (
-                        <div className="flex items-center gap-1.5">
-                          <div className={`flex h-6 w-6 items-center justify-center rounded-full text-white text-[10px] font-bold ${avatarColor(mentorName)}`}>
-                            {initials(mentorName)}
-                          </div>
-                          <span className="text-xs font-semibold text-slate-700">{mentorName}</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
-                          <UserCheck className="h-3.5 w-3.5 text-slate-300" />
-                          <span className="text-xs text-slate-400">Belum ditugaskan</span>
-                        </div>
-                      )}
-                    </div>
-
+                  {/* Interns count */}
+                  <div className="flex items-end justify-end border-t border-slate-100 pt-3">
                     <div className="text-right">
                       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Interns</p>
                       <div className="flex items-center gap-1 justify-end">
