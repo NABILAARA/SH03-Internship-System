@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/utils/hash";
 import { revalidatePath } from "next/cache";
 import { changeEmailSchema, internProfileSchema } from "../schemas/profile.schema";
+import { validateStrongPassword } from "@/features/auth/schemas/auth.schema";
 
 export async function getProfileData() {
   const session = await auth();
@@ -214,9 +215,8 @@ export async function changePasswordAction(data: {
     if (data.newPassword !== data.confirmPassword) {
       return { error: "Konfirmasi password tidak cocok." };
     }
-    if (data.newPassword.length < 8) {
-      return { error: "Password baru minimal 8 karakter." };
-    }
+    const pwError = validateStrongPassword(data.newPassword);
+    if (pwError) return { error: pwError };
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },

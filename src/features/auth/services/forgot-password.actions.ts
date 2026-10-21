@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/utils/hash";
+import { validateStrongPassword } from "@/features/auth/schemas/auth.schema";
 import { sendPasswordResetEmail } from "@/services/email";
 import crypto from "crypto";
 
@@ -80,7 +81,8 @@ export async function resetPasswordAction(token: string, newPassword: string, co
   try {
     if (!token) return { error: "Token tidak valid." };
     if (!newPassword) return { error: "Password baru wajib diisi." };
-    if (newPassword.length < 8) return { error: "Password minimal 8 karakter." };
+    const pwError = validateStrongPassword(newPassword);
+    if (pwError) return { error: pwError };
     if (newPassword !== confirmPassword) return { error: "Konfirmasi password tidak cocok." };
 
     const record = await prisma.passwordResetToken.findUnique({
