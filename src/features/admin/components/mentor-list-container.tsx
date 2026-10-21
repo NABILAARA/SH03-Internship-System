@@ -8,6 +8,21 @@ import {
 import { getUsersByRole, deleteUser, addMentorByAdminAction } from "../services/user-management.actions";
 import { Button } from "@/components/ui/button";
 
+/** Returns strength 0-5 based on password criteria */
+function passwordStrength(pw: string): { score: number; label: string; color: string } {
+  if (!pw) return { score: 0, label: "", color: "" };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(pw)) score++;
+  if (score <= 2) return { score, label: "Lemah", color: "bg-red-500" };
+  if (score === 3) return { score, label: "Sedang", color: "bg-amber-500" };
+  if (score === 4) return { score, label: "Kuat", color: "bg-blue-500" };
+  return { score, label: "Sangat Kuat", color: "bg-emerald-500" };
+}
+
 /* ─── Types ────────────────────────────────────────────── */
 interface Mentor {
   id: string;
@@ -346,10 +361,24 @@ export function MentorListContainer({
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700">Password <span className="text-red-500">*</span></label>
-                    <input type="password" placeholder="Min. 6 karakter" value={addPassword}
+                    <input type="password" placeholder="Min. 8 karakter" value={addPassword}
                       onChange={e => setAddPassword(e.target.value)} required
                       className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
-                    <p className="text-[10px] text-slate-400">Mentor dapat mengganti password sendiri di halaman profil.</p>
+                    {addPassword && (() => {
+                      const s = passwordStrength(addPassword);
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex gap-1">
+                            {[1,2,3,4,5].map(i => (
+                              <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= s.score ? s.color : "bg-slate-200"}`} />
+                            ))}
+                          </div>
+                          <p className={`text-[10px] font-medium ${s.score <= 2 ? "text-red-500" : s.score === 3 ? "text-amber-500" : s.score === 4 ? "text-blue-600" : "text-emerald-600"}`}>
+                            {s.label} — harus mengandung huruf besar, huruf kecil, angka, dan simbol
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="space-y-1.5">

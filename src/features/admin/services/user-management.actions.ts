@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { UserRole } from "@/types/roles";
 import { hashPassword } from "@/utils/hash";
+import { validateStrongPassword } from "@/features/auth/schemas/auth.schema";
 
 export async function getUsersByRole(role: UserRole) {
   try {
@@ -136,7 +137,8 @@ export async function addMentorByAdminAction(data: {
     if (!data.name.trim())        return { error: "Nama wajib diisi." };
     if (!data.email.trim())       return { error: "Email wajib diisi." };
     if (!data.password.trim())    return { error: "Password wajib diisi." };
-    if (data.password.length < 6) return { error: "Password minimal 6 karakter." };
+    const pwError = validateStrongPassword(data.password);
+    if (pwError) return { error: pwError };
 
     const existing = await prisma.user.findUnique({
       where: { email: data.email.trim().toLowerCase() },
@@ -182,7 +184,8 @@ export async function addInternByAdminAction(data: {
     if (!data.name.trim())     return { error: "Nama wajib diisi." };
     if (!data.email.trim())    return { error: "Email wajib diisi." };
     if (!data.password.trim()) return { error: "Password wajib diisi." };
-    if (data.password.length < 6) return { error: "Password minimal 6 karakter." };
+    const pwError = validateStrongPassword(data.password);
+    if (pwError) return { error: pwError };
     if (!data.programId)       return { error: "Program wajib dipilih." };
     if (!data.position)        return { error: "Posisi wajib dipilih." };
 
