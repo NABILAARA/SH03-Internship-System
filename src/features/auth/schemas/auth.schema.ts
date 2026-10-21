@@ -18,8 +18,15 @@ function isAllowedEmail(email: string): boolean {
 
 export const registerSchema = loginSchema.extend({
   name: z.string().min(2),
+  confirmPassword: z.string().min(8),
   role: z.enum(["MENTOR", "INTERN"]).optional().default("INTERN")
 }).refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: "Konfirmasi password tidak cocok.",
+    path: ["confirmPassword"]
+  }
+).refine(
   (data) => isAllowedEmail(data.email),
   {
     message: "Email harus menggunakan @gmail.com atau domain universitas (contoh: @student.ui.ac.id)",

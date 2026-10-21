@@ -63,6 +63,7 @@ export function MentorListContainer({
   const [addName, setAddName] = useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addPassword, setAddPassword] = useState("");
+  const [addConfirmPassword, setAddConfirmPassword] = useState("");
   const [addSuccess, setAddSuccess] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [addLoading, setAddLoading] = useState(false);
@@ -116,6 +117,13 @@ export function MentorListContainer({
     e.preventDefault();
     setAddLoading(true);
     setAddError(null);
+
+    if (addPassword !== addConfirmPassword) {
+      setAddError("Konfirmasi password tidak cocok.");
+      setAddLoading(false);
+      return;
+    }
+
     try {
       const res = await addMentorByAdminAction({ name: addName, email: addEmail, password: addPassword });
       if (res.error) {
@@ -134,7 +142,7 @@ export function MentorListContainer({
 
   const closeAdd = () => {
     setShowAddModal(false);
-    setAddName(""); setAddEmail(""); setAddPassword("");
+    setAddName(""); setAddEmail(""); setAddPassword(""); setAddConfirmPassword("");
     setAddError(null); setAddSuccess(false);
   };
 
@@ -342,6 +350,23 @@ export function MentorListContainer({
                       onChange={e => setAddPassword(e.target.value)} required
                       className="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
                     <p className="text-[10px] text-slate-400">Mentor dapat mengganti password sendiri di halaman profil.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Konfirmasi Password <span className="text-red-500">*</span></label>
+                    <input type="password" placeholder="Ulangi password" value={addConfirmPassword}
+                      onChange={e => setAddConfirmPassword(e.target.value)} required
+                      className={`w-full rounded-lg border py-2.5 px-3 text-sm outline-none transition ${
+                        addConfirmPassword && addPassword !== addConfirmPassword
+                          ? "border-red-400 focus:border-red-400 focus:ring-red-100"
+                          : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
+                      } focus:ring-2`} />
+                    {addConfirmPassword && addPassword !== addConfirmPassword && (
+                      <p className="text-[10px] text-red-500">Konfirmasi password tidak cocok.</p>
+                    )}
+                    {addConfirmPassword && addPassword === addConfirmPassword && (
+                      <p className="text-[10px] text-emerald-600">✓ Password cocok.</p>
+                    )}
                   </div>
                 </form>
               )}
