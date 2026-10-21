@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]).{8,}$/;
+const STRONG_PASSWORD_MESSAGE =
+  "Password minimal 8 karakter dan harus mengandung huruf besar, huruf kecil, angka, dan simbol (contoh: !@#$%).";
+
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8)
@@ -16,7 +20,9 @@ function isAllowedEmail(email: string): boolean {
   );
 }
 
-export const registerSchema = loginSchema.extend({
+export const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().regex(STRONG_PASSWORD_REGEX, STRONG_PASSWORD_MESSAGE),
   name: z.string().min(2),
   confirmPassword: z.string().min(8),
   role: z.enum(["MENTOR", "INTERN"]).optional().default("INTERN")
@@ -33,3 +39,9 @@ export const registerSchema = loginSchema.extend({
     path: ["email"]
   }
 );
+
+/** Reusable strong password validator — dipakai di server actions admin */
+export function validateStrongPassword(password: string): string | null {
+  if (!STRONG_PASSWORD_REGEX.test(password)) return STRONG_PASSWORD_MESSAGE;
+  return null;
+}
