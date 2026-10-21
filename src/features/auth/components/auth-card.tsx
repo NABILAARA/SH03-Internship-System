@@ -30,7 +30,7 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
     resolver: zodResolver(schema),
     defaultValues: isLogin
       ? { email: "", password: "" }
-      : { name: "", email: "", password: "", role: "INTERN" }
+      : { name: "", email: "", password: "", confirmPassword: "", role: "INTERN" }
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,6 +165,27 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
               <p className="text-xs text-destructive">{errors.password.message as string}</p>
             )}
           </div>
+
+          {!isLogin && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700" htmlFor="confirmPassword">
+                Konfirmasi Password
+              </label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  className="w-full rounded-lg border border-slate-200 bg-white/50 py-2.5 pl-10 pr-4 text-sm outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  id="confirmPassword"
+                  placeholder="••••••••"
+                  type="password"
+                  {...register("confirmPassword")}
+                />
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-xs text-destructive">{errors.confirmPassword.message as string}</p>
+              )}
+            </div>
+          )}
 
           {!isLogin && (
             <div className="space-y-1.5">
