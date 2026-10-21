@@ -10,6 +10,21 @@ import {
 } from "@/features/auth/services/forgot-password.actions";
 import { Button } from "@/components/ui/button";
 
+/** Password strength helper — same logic as registration */
+function passwordStrength(pw: string): { score: number; label: string; color: string; textColor: string } {
+  if (!pw) return { score: 0, label: "", color: "", textColor: "" };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(pw)) score++;
+  if (score <= 2) return { score, label: "Lemah",       color: "bg-red-500",     textColor: "text-red-500" };
+  if (score === 3) return { score, label: "Sedang",      color: "bg-amber-500",   textColor: "text-amber-500" };
+  if (score === 4) return { score, label: "Kuat",        color: "bg-blue-500",    textColor: "text-blue-600" };
+  return              { score, label: "Sangat Kuat",  color: "bg-emerald-500", textColor: "text-emerald-600" };
+}
+
 export default function ResetPasswordPage() {
   const params = useParams();
   const router = useRouter();
@@ -134,7 +149,7 @@ export default function ResetPasswordPage() {
                 Buat Password Baru
               </h1>
               <p className="text-sm text-slate-500">
-                Masukkan password baru untuk akun Anda. Minimal 8 karakter.
+                Masukkan password baru. Minimal 8 karakter dengan kombinasi huruf besar, huruf kecil, angka, dan simbol.
               </p>
             </div>
 
@@ -171,6 +186,22 @@ export default function ResetPasswordPage() {
                     {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {/* Strength indicator */}
+                {newPassword && (() => {
+                  const s = passwordStrength(newPassword);
+                  return (
+                    <div className="space-y-1 mt-1">
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map(i => (
+                          <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-200 ${i <= s.score ? s.color : "bg-slate-200"}`} />
+                        ))}
+                      </div>
+                      <p className={`text-[11px] font-medium ${s.textColor}`}>
+                        {s.label} — harus mengandung huruf besar, huruf kecil, angka, dan simbol
+                      </p>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Konfirmasi Password */}
