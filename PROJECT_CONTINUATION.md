@@ -953,3 +953,64 @@ Fallback inisial tampil kembali di profil dan sidebar
 
 **Last Updated:** 2026-09-07
 **Session Status:** period → startDate/endDate, program card cleanup, certificate PDF rewrite — semua implemented dan verified.
+
+---
+
+## Session Update — 2026-09-08
+
+### Perubahan dari commit `88291de` hingga `1a0c50c`
+
+#### 1. Feat: Konfirmasi Password di Form Registrasi
+
+Field **"Konfirmasi Password"** ditambahkan di 3 tempat:
+
+**Registrasi user umum (`/register`):**
+- `auth.schema.ts` — tambah field `confirmPassword: z.string().min(8)` ke `registerSchema` + `.refine()` validasi kecocokan password
+- `auth-card.tsx` — input "Konfirmasi Password" muncul setelah field Password, hanya saat mode register (tidak saat login)
+- Error message inline: "Konfirmasi password tidak cocok."
+
+**Admin tambah Intern (`/admin/interns`):**
+- `user-list-container.tsx` — tambah state `addConfirmPassword`, validasi kecocokan sebelum submit, input field dengan indikator merah/hijau real-time
+
+**Admin tambah Mentor (`/admin/mentors`):**
+- `mentor-list-container.tsx` — sama persis dengan Add Intern
+
+#### 2. Feat: Validasi Password Kuat (Strong Password)
+
+Semua titik registrasi dan reset password sekarang wajib memenuhi kriteria:
+- Minimal 8 karakter
+- Minimal 1 huruf besar (A-Z)
+- Minimal 1 huruf kecil (a-z)
+- Minimal 1 angka (0-9)
+- Minimal 1 simbol (`!@#$%^&*` dll.)
+
+**File yang diubah:**
+
+- `auth.schema.ts` — tambah `STRONG_PASSWORD_REGEX`, update `registerSchema` pakai regex, export fungsi `validateStrongPassword()` untuk dipakai di server actions
+- `user-management.actions.ts` — `addInternByAdminAction` dan `addMentorByAdminAction` ganti validasi `length < 6` ke `validateStrongPassword()`
+- `user-list-container.tsx` — tambah helper `passwordStrength()`, indikator 5 bar kekuatan password real-time (Lemah/Sedang/Kuat/Sangat Kuat) di modal Add Intern
+- `mentor-list-container.tsx` — sama, indikator kekuatan password di modal Add Mentor
+
+#### 3. Feat: Strong Password di Reset Password & Ganti Password Profil
+
+- `forgot-password.actions.ts` — `resetPasswordAction` ganti validasi `length < 8` ke `validateStrongPassword()`
+- `profile.actions.ts` — `changePasswordAction` (ganti password dari halaman profil) juga pakai `validateStrongPassword()`
+- `reset-password/[token]/page.tsx` — tambah indikator 5 bar kekuatan password real-time + deskripsi syarat kombinasi
+
+**Catatan penting:** Akun yang sudah terdaftar sebelum rule ini dibuat **tidak terpengaruh** — rule hanya berlaku saat pembuatan akun baru dan perubahan password.
+
+---
+
+## Updated Key Implementation Files (2026-09-08)
+
+- `src/features/auth/schemas/auth.schema.ts` — `STRONG_PASSWORD_REGEX`, `registerSchema` dengan `confirmPassword`, export `validateStrongPassword()`
+- `src/features/auth/components/auth-card.tsx` — field Konfirmasi Password di form registrasi
+- `src/features/admin/components/user-list-container.tsx` — Konfirmasi Password + indikator kekuatan di modal Add Intern
+- `src/features/admin/components/mentor-list-container.tsx` — Konfirmasi Password + indikator kekuatan di modal Add Mentor
+- `src/features/admin/services/user-management.actions.ts` — validasi strong password di addIntern dan addMentor
+- `src/features/auth/services/forgot-password.actions.ts` — strong password di resetPasswordAction
+- `src/features/profile/services/profile.actions.ts` — strong password di changePasswordAction
+- `src/app/(public)/reset-password/[token]/page.tsx` — indikator kekuatan password real-time
+
+**Last Updated:** 2026-09-08
+**Session Status:** Confirm password + strong password validation — implemented di semua titik registrasi, reset password, dan ganti password profil.
