@@ -1014,3 +1014,35 @@ Semua titik registrasi dan reset password sekarang wajib memenuhi kriteria:
 
 **Last Updated:** 2026-09-08
 **Session Status:** Confirm password + strong password validation — implemented di semua titik registrasi, reset password, dan ganti password profil.
+
+---
+
+## Session Update — 2026-09-08 (Lanjutan)
+
+### Perubahan dari commit `e4bbcf4` hingga `4721411`
+
+#### 1. Feat: Tampilkan Sisa Percobaan Login Sebelum Rate Limit
+
+Sebelumnya user hanya tahu akun diblokir **setelah** percobaan ke-5. Sekarang ada warning bertahap:
+
+**Perilaku warning:**
+- Sisa 3 percobaan → banner kuning: `"Peringatan: Sisa 3 percobaan login lagi."`
+- Sisa 2 percobaan → banner kuning: `"Peringatan: Sisa 2 percobaan login lagi."`
+- Sisa 1 percobaan → banner merah: `"⚠️ Terakhir! Sisa 1 percobaan sebelum akun diblokir sementara."`
+- Sisa 0 / diblokir → error merah: `"Terlalu banyak percobaan login. Akses diblokir selama X menit."`
+
+Warning **tidak muncul** saat pertama buka halaman — hanya setelah ada login gagal. Warning juga di-reset saat mulai submit ulang.
+
+**File yang diubah:**
+- `src/features/auth/services/auth.actions.ts` — `loginAction` sekarang return field `remaining` (sisa percobaan) di setiap response login gagal, termasuk saat rate limited (`remaining: 0`)
+- `src/features/auth/components/auth-card.tsx` — tambah state `remainingAttempts`, update dari response tiap login gagal, tampilkan banner warning kalau `remaining ≤ 3`
+
+---
+
+## Updated Key Implementation Files (2026-09-08 Lanjutan)
+
+- `src/features/auth/services/auth.actions.ts` — return `remaining` di semua error path `loginAction`
+- `src/features/auth/components/auth-card.tsx` — state `remainingAttempts` + banner warning bertahap
+
+**Last Updated:** 2026-09-08 (Lanjutan)
+**Session Status:** Remaining login attempts warning — implemented dan verified.
