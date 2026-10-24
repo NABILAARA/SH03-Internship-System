@@ -107,15 +107,10 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
 
         {/* Remaining attempts warning — only shown during login, only when ≤ 3 left */}
         {isLogin && remainingAttempts !== null && remainingAttempts <= 3 && remainingAttempts > 0 && (
-          <div className={`mb-4 flex items-start gap-3 rounded-lg border p-3 text-sm ${
-            remainingAttempts === 1
-              ? "bg-red-50 border-red-200 text-red-700"
-              : "bg-amber-50 border-amber-200 text-amber-700"
-          }`}>
-            <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" />
+          <div className="mb-4 rounded-lg border bg-amber-50 border-amber-200 text-amber-700 p-3 text-sm">
             <p>
               {remainingAttempts === 1
-                ? "⚠️ Terakhir! Sisa 1 percobaan sebelum akun diblokir sementara."
+                ? "Peringatan: Sisa 1 percobaan login lagi."
                 : `Peringatan: Sisa ${remainingAttempts} percobaan login lagi.`}
             </p>
           </div>
