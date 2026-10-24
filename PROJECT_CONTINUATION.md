@@ -1046,3 +1046,24 @@ Warning **tidak muncul** saat pertama buka halaman — hanya setelah ada login g
 
 **Last Updated:** 2026-09-08 (Lanjutan)
 **Session Status:** Remaining login attempts warning — implemented dan verified.
+
+---
+
+## Session Update — 2026-09-08 (Perbaikan UI Warning Login)
+
+### Perubahan dari commit `69594ce` hingga `2906ae5`
+
+#### 1. Fix: Seragamkan Tampilan Warning Sisa Percobaan Login
+
+Sebelumnya sisa 1 percobaan menggunakan template merah dan teks berbeda ("⚠️ Terakhir! Sisa 1 percobaan sebelum akun diblokir sementara.") dibanding sisa 2 dan 3.
+
+Sekarang **semua 3 kondisi seragam** — template kuning amber, tanpa icon, teks konsisten:
+- Sisa 3 → `"Peringatan: Sisa 3 percobaan login lagi."`
+- Sisa 2 → `"Peringatan: Sisa 2 percobaan login lagi."`
+- Sisa 1 → `"Peringatan: Sisa 1 percobaan login lagi."`
+
+**File yang diubah:**
+- `src/features/auth/components/auth-card.tsx` — hapus conditional styling merah untuk sisa 1, hapus `ShieldAlert` icon, seragamkan ke `bg-amber-50 border-amber-200 text-amber-700`
+
+**Last Updated:** 2026-09-08 (Perbaikan UI)
+**Session Status:** Warning sisa percobaan login diseragamkan ke amber style tanpa icon.
