@@ -55,12 +55,13 @@ export async function loginAction(formData: { email: string; password: string })
     headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
 
   // Cek rate limit via Upstash Redis (persist antar request & cold start)
-  const { success, reset } = await loginRatelimit.limit(ip);
+  const { success, reset, remaining } = await loginRatelimit.limit(ip);
   if (!success) {
     const minutes = Math.ceil((reset - Date.now()) / 60_000);
     return {
       error: `Terlalu banyak percobaan login. Akses diblokir selama ${minutes} menit.`,
       rateLimited: true,
+      remaining: 0,
     };
   }
 
@@ -75,8 +76,8 @@ export async function loginAction(formData: { email: string; password: string })
   } catch (error) {
     if (error instanceof AuthError) {
       const cause = (error.cause as { err?: Error } | undefined)?.err?.message;
-      if (cause) return { error: cause };
-      return { error: "Email atau password yang Anda masukkan salah." };
+      if (cause) return { error: cause, remaining };
+      return { error: "Email atau password yang Anda masukkan salah.", remaining };
     }
     // NEXT_REDIRECT: session sudah di-set, anggap berhasil
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
@@ -84,6 +85,6 @@ export async function loginAction(formData: { email: string; password: string })
     }
     // Semua exception lain — jangan throw ke client, return error generik
     console.error("[loginAction] unexpected error:", error);
-    return { error: "Email atau password yang Anda masukkan salah." };
+    return { error: "Email atau password yang Anda masukkan salah.", remaining };
   }
 }
