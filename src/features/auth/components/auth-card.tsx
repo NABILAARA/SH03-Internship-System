@@ -20,6 +20,7 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
 
   const schema = isLogin ? loginSchema : registerSchema;
   const {
@@ -38,6 +39,7 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
     setError(null);
     setSuccess(null);
     setIsLoading(true);
+    if (isLogin) setRemainingAttempts(null);
 
     try {
       if (isLogin) {
@@ -48,6 +50,10 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
 
         if (result?.error) {
           setError(result.error);
+          // Update sisa percobaan kalau ada di response
+          if (typeof result.remaining === "number") {
+            setRemainingAttempts(result.remaining);
+          }
           setIsLoading(false);
         } else {
           // Full reload agar cookie session yang baru di-set server langsung terbaca
@@ -93,9 +99,25 @@ export function AuthCard({ mode }: Readonly<AuthCardProps>) {
         </div>
 
         {error && (
-          <div className="mb-6 flex items-start gap-3 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+          <div className="mb-4 flex items-start gap-3 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
             <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" />
             <p>{error}</p>
+          </div>
+        )}
+
+        {/* Remaining attempts warning — only shown during login, only when ≤ 3 left */}
+        {isLogin && remainingAttempts !== null && remainingAttempts <= 3 && remainingAttempts > 0 && (
+          <div className={`mb-4 flex items-start gap-3 rounded-lg border p-3 text-sm ${
+            remainingAttempts === 1
+              ? "bg-red-50 border-red-200 text-red-700"
+              : "bg-amber-50 border-amber-200 text-amber-700"
+          }`}>
+            <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" />
+            <p>
+              {remainingAttempts === 1
+                ? "⚠️ Terakhir! Sisa 1 percobaan sebelum akun diblokir sementara."
+                : `Peringatan: Sisa ${remainingAttempts} percobaan login lagi.`}
+            </p>
           </div>
         )}
 
