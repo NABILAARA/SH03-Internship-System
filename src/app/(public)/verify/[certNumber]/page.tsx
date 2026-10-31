@@ -8,11 +8,11 @@ export const metadata: Metadata = {
 };
 
 interface Props {
-  params: { certNumber: string };
+  params: Promise<{ certNumber: string }>;
 }
 
 export default async function VerifyCertificatePage({ params }: Props) {
-  const { certNumber } = params;
+  const { certNumber } = await params;
 
   const certificate = await prisma.certificate.findUnique({
     where: { certNumber: decodeURIComponent(certNumber) },
