@@ -13,7 +13,12 @@ type User = {
   internEvaluation: Evaluation | null;
   applications: Application[];
 };
-type Certificate = { certNumber: string; issuedAt: Date; user: User };
+type Certificate = {
+  certNumber: string;
+  issuedAt: Date;
+  verifyUrl?: string | null;
+  user: User;
+};
 type InternCertificateProps = { certificate: Certificate | null };
 
 export function InternCertificate({ certificate }: Readonly<InternCertificateProps>) {
@@ -184,6 +189,27 @@ export function InternCertificate({ certificate }: Readonly<InternCertificatePro
       pdf.setTextColor(120, 53, 15); // amber-950
       pdf.text("ORIGINAL", W - 35, H - 30, { align: "center" });
 
+      // ── QR Code verifikasi ──
+      const verifyUrl = certificate.verifyUrl ?? "https://sh-03-internship-system.vercel.app/";
+      try {
+        const QRCode = await import("qrcode");
+        const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+          margin: 1,
+          width: 200,
+          color: { dark: "#1e3a8a", light: "#ffffff" },
+        });
+        // Posisi QR: pojok kanan bawah di atas seal
+        const qrSize = 22;
+        pdf.addImage(qrDataUrl, "PNG", W - 35 - qrSize / 2, H - 70, qrSize, qrSize);
+        // Label di bawah QR
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(5);
+        pdf.setTextColor(148, 163, 184);
+        pdf.text("Scan untuk verifikasi", W - 35, H - 46, { align: "center" });
+      } catch {
+        // QR gagal generate — tidak fatal, PDF tetap tersimpan
+      }
+
       pdf.save(`Sertifikat-LEXA-${certificate.certNumber}.pdf`);
     } catch (err) {
       console.error("Gagal generate PDF:", err);
@@ -222,6 +248,7 @@ export function InternCertificate({ certificate }: Readonly<InternCertificatePro
 
   const programTitle = certificate.user.applications[0]?.program.title || "Frontend Web Developer";
   const finalScore   = certificate.user.internEvaluation?.finalScore ?? 90.0;
+  const verifyUrl    = certificate.verifyUrl ?? "https://sh-03-internship-system.vercel.app/";
 
   return (
     <div className="space-y-6">
@@ -362,22 +389,38 @@ export function InternCertificate({ certificate }: Readonly<InternCertificatePro
               </p>
             </div>
 
-            {/* Seal */}
-            <div
-              className="relative shrink-0 flex items-center justify-center rounded-full border-4 border-amber-400 bg-amber-500 shadow-lg"
-              style={{ width: "clamp(44px, 7vw, 70px)", height: "clamp(44px, 7vw, 70px)", transform: "rotate(12deg)" }}
-            >
-              <div className="absolute inset-1.5 rounded-full border border-dashed border-white/60 flex flex-col items-center justify-center gap-0.5">
-                <Sparkles
-                  className="text-white"
-                  style={{ width: "35%", height: "35%", animation: "spin 12s linear infinite" }}
+            {/* QR Code + Seal */}
+            <div className="flex items-end gap-2">
+              {/* QR Code */}
+              <div className="flex flex-col items-center gap-0.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(verifyUrl)}&color=1e3a8a&bgcolor=ffffff&margin=2`}
+                  alt="QR Verifikasi"
+                  style={{ width: "clamp(32px, 5.5vw, 60px)", height: "clamp(32px, 5.5vw, 60px)" }}
                 />
-                <span
-                  className="uppercase font-serif font-black tracking-widest text-amber-950 text-center leading-tight"
-                  style={{ fontSize: "clamp(4px, 0.6vw, 7px)" }}
-                >
-                  ORIGINAL
-                </span>
+                <p style={{ fontSize: "clamp(4px, 0.55vw, 6px)" }} className="text-slate-400 text-center">
+                  Scan untuk verifikasi
+                </p>
+              </div>
+
+              {/* Seal */}
+              <div
+                className="relative shrink-0 flex items-center justify-center rounded-full border-4 border-amber-400 bg-amber-500 shadow-lg"
+                style={{ width: "clamp(44px, 7vw, 70px)", height: "clamp(44px, 7vw, 70px)", transform: "rotate(12deg)" }}
+              >
+                <div className="absolute inset-1.5 rounded-full border border-dashed border-white/60 flex flex-col items-center justify-center gap-0.5">
+                  <Sparkles
+                    className="text-white"
+                    style={{ width: "35%", height: "35%", animation: "spin 12s linear infinite" }}
+                  />
+                  <span
+                    className="uppercase font-serif font-black tracking-widest text-amber-950 text-center leading-tight"
+                    style={{ fontSize: "clamp(4px, 0.6vw, 7px)" }}
+                  >
+                    ORIGINAL
+                  </span>
+                </div>
               </div>
             </div>
           </div>

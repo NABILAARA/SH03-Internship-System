@@ -112,8 +112,10 @@ export async function submitEvaluationAction(formData: {
       const certCount = await prisma.certificate.count();
       const seq = String(certCount + 1).padStart(4, "0");
       const certNumber = `LEXA-INT-2026-0401-${seq}`;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://sh-03-internship-system.vercel.app";
+      const verifyUrl = `${appUrl}/verify/${certNumber}`;
       await prisma.certificate.create({
-        data: { userId: internId, certNumber }
+        data: { userId: internId, certNumber, verifyUrl }
       });
     }
 
