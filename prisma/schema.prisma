@@ -248,6 +248,7 @@ model Certificate {
   id         String   @id @default(cuid())
   userId     String   @unique
   certNumber String   @unique
+  verifyUrl  String?  // URL verifikasi QR Code — nullable untuk backward compat
   issuedAt   DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

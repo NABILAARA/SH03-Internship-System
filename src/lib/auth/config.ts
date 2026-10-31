@@ -57,7 +57,8 @@ export const authConfig = {
         pathname === "/register" ||
         pathname === "/internship-information" ||
         pathname === "/forgot-password" ||
-        pathname.startsWith("/reset-password")
+        pathname.startsWith("/reset-password") ||
+        pathname.startsWith("/verify")
       ) {
         return true;
       }
