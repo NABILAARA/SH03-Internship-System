@@ -1127,3 +1127,72 @@ Wajib di-set dengan benar di Vercel agar QR Code mengarah ke URL yang tepat, buk
 
 **Last Updated:** 2026-11-01
 **Session Status:** QR Code verifikasi sertifikat — implemented, migration applied, halaman publik verify dibuat, build fix untuk Next.js 15 params async.
+
+---
+
+## Catatan Status QR Code Sertifikat — Kondisi Saat Ini vs Pengembangan Selanjutnya
+
+### Kondisi Saat Ini
+
+QR Code sudah tampil di sertifikat (preview browser dan PDF), **namun link yang tertanam di QR Code saat ini mengarah ke landing page utama LEXA** (`https://sh-03-internship-system.vercel.app/`) — bukan ke halaman verifikasi unik per sertifikat.
+
+Ini terjadi karena:
+- Field `verifyUrl` di database untuk sertifikat yang sudah ada masih `null` (data lama sebelum fitur ini dibuat)
+- Fallback code di `intern-certificate.tsx` menggunakan URL default landing page:
+  ```ts
+  const verifyUrl = certificate.verifyUrl ?? "https://sh-03-internship-system.vercel.app/"
+  ```
+- Sertifikat **baru** yang dibuat setelah fitur ini diimplementasikan sudah menyimpan `verifyUrl` yang benar ke DB, tapi belum ada sertifikat baru yang dibuat sejak implementasi
+
+---
+
+### Pengembangan Selanjutnya — QR Code dengan Link Unik per Sertifikat
+
+**Yang perlu dikerjakan:**
+
+#### 1. Update `verifyUrl` untuk sertifikat lama di database
+
+Jalankan script update data untuk mengisi `verifyUrl` semua sertifikat yang masih `null`:
+
+```sql
+UPDATE "Certificate"
+SET "verifyUrl" = CONCAT('https://sh-03-internship-system.vercel.app/verify/', "certNumber")
+WHERE "verifyUrl" IS NULL;
+```
+
+Atau via Node.js script dengan `prisma.certificate.updateMany()`.
+
+Setelah ini, setiap sertifikat (lama maupun baru) akan punya link unik seperti:
+```
+https://sh-03-internship-system.vercel.app/verify/LEXA-INT-2026-0401-0001
+```
+
+#### 2. Verifikasi halaman `/verify/[certNumber]` sudah berfungsi di production
+
+- Buka URL: `https://sh-03-internship-system.vercel.app/verify/LEXA-INT-2026-0401-0001`
+- Halaman harus menampilkan data sertifikat yang valid tanpa perlu login
+- Kalau belum jalan, pastikan `NEXT_PUBLIC_APP_URL` sudah diset benar di Vercel env vars
+
+#### 3. Kalau domain berubah di masa depan
+
+Update semua `verifyUrl` di database:
+```sql
+UPDATE "Certificate"
+SET "verifyUrl" = REPLACE("verifyUrl", 'domain-lama.vercel.app', 'domain-baru.com');
+```
+
+Tidak perlu ubah kode apapun.
+
+---
+
+**Ringkasan status:**
+
+| Kondisi | Status |
+|---|---|
+| QR Code tampil di sertifikat | ✅ Sudah |
+| Link QR mengarah ke halaman unik per sertifikat | ⏳ Perlu update data DB |
+| Halaman `/verify/[certNumber]` sudah ada | ✅ Sudah |
+| Sertifikat baru otomatis dapat link unik | ✅ Sudah |
+| Sertifikat lama perlu di-backfill `verifyUrl` | ⏳ Belum dikerjakan |
+
+**Last Updated:** 2026-11-01
