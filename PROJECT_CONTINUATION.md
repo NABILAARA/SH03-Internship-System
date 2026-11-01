@@ -1067,3 +1067,63 @@ Sekarang **semua 3 kondisi seragam** — template kuning amber, tanpa icon, teks
 
 **Last Updated:** 2026-09-08 (Perbaikan UI)
 **Session Status:** Warning sisa percobaan login diseragamkan ke amber style tanpa icon.
+
+---
+
+## Session Update — 2026-11-01
+
+### Perubahan dari commit `1915b14` hingga `ac32b06`
+
+#### 1. Feat: QR Code Verifikasi di Sertifikat
+
+QR Code ditambahkan ke sertifikat intern — di preview browser maupun di PDF yang didownload. Saat QR di-scan, mengarah ke halaman verifikasi publik yang menampilkan keabsahan sertifikat.
+
+**Database:**
+- Tambah field `verifyUrl String?` ke model `Certificate` (nullable — aman untuk data lama)
+- Migration: `20260908000000_add_verify_url_to_certificate` — hanya `ADD COLUMN IF NOT EXISTS`, tidak hapus data
+- `evaluation.actions.ts` — saat generate sertifikat baru, otomatis simpan `verifyUrl = APP_URL/verify/certNumber`
+
+**Halaman verifikasi publik `/verify/[certNumber]`:**
+- Accessible tanpa login — siapapun yang scan QR bisa verifikasi
+- Tampilkan status **Valid** (hijau) atau **Tidak Valid** (merah)
+- Kalau valid: tampilkan nama peserta, program, posisi, nomor sertifikat, tanggal terbit, nilai akhir
+- Route ditambahkan ke allowed public paths di `lib/auth/config.ts`
+
+**Sertifikat UI + PDF:**
+- Preview browser: QR Code di pojok kanan bawah (sebelah seal) menggunakan QR Server API
+- Download PDF: QR Code di-generate via library `qrcode` sebagai base64 PNG, di-embed ke PDF via `jsPDF.addImage()`
+- Label "Scan untuk verifikasi" di bawah QR Code
+- `verifyUrl` fallback ke `https://sh-03-internship-system.vercel.app/` kalau belum tersimpan di DB (untuk sertifikat lama)
+
+**URL verifikasi:**
+- Format: `{NEXT_PUBLIC_APP_URL}/verify/{certNumber}`
+- Contoh: `https://sh-03-internship-system.vercel.app/verify/LEXA-INT-2026-0401-0001`
+- URL disimpan di DB saat sertifikat dibuat — bisa diupdate per sertifikat kalau domain berubah
+
+#### 2. Fix: `await params` di Halaman Verify untuk Next.js 15
+
+- Next.js 15 mengubah `params` di page components menjadi `Promise` — harus di-`await`
+- `src/app/(public)/verify/[certNumber]/page.tsx` difix: `const { certNumber } = await params`
+- Build Vercel yang sebelumnya gagal (`Type error: Type 'Props' does not satisfy constraint 'PageProps'`) sekarang berhasil
+
+---
+
+## Updated Key Implementation Files (2026-11-01)
+
+- `prisma/schema.prisma` — field `verifyUrl String?` di model `Certificate`
+- `prisma/migrations/20260908000000_add_verify_url_to_certificate/migration.sql`
+- `src/app/(public)/verify/[certNumber]/page.tsx` — halaman verifikasi publik (baru)
+- `src/features/intern/components/intern-certificate.tsx` — QR Code di UI dan PDF
+- `src/features/mentor/services/evaluation.actions.ts` — simpan `verifyUrl` saat generate sertifikat
+- `src/lib/auth/config.ts` — `/verify/*` ditambahkan ke public paths
+
+## Environment Variables Wajib (Tambahan)
+
+```env
+NEXT_PUBLIC_APP_URL="https://your-domain.vercel.app"
+```
+
+Wajib di-set dengan benar di Vercel agar QR Code mengarah ke URL yang tepat, bukan `localhost`.
+
+**Last Updated:** 2026-11-01
+**Session Status:** QR Code verifikasi sertifikat — implemented, migration applied, halaman publik verify dibuat, build fix untuk Next.js 15 params async.
